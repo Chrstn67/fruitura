@@ -15,6 +15,7 @@ const MessagesPage = () => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -44,7 +45,6 @@ const MessagesPage = () => {
     try {
       setLoading(true);
 
-      // Récupérer toutes les conversations où l'utilisateur est impliqué
       const { data: messagesData, error } = await superbase
         .from("messages_2025_10_29_18_05")
         .select(
@@ -60,7 +60,6 @@ const MessagesPage = () => {
 
       if (error) throw error;
 
-      // Grouper les messages par conversation
       const conversationsMap = new Map();
 
       messagesData?.forEach((message) => {
@@ -90,7 +89,6 @@ const MessagesPage = () => {
           conversation.lastMessage = message;
         }
 
-        // Compter les messages non lus
         if (!message.is_read && message.receiver_id === user.id) {
           conversation.unreadCount++;
         }
@@ -152,7 +150,6 @@ const MessagesPage = () => {
 
       await query;
 
-      // Mettre à jour le compteur local
       setConversations((prev) =>
         prev.map((conv) =>
           conv.id === conversationId ? { ...conv, unreadCount: 0 } : conv
@@ -195,7 +192,6 @@ const MessagesPage = () => {
       setMessages((prev) => [...prev, data]);
       setNewMessage("");
 
-      // Mettre à jour la conversation
       setConversations((prev) =>
         prev.map((conv) =>
           conv.id === selectedConversation.id
@@ -222,7 +218,6 @@ const MessagesPage = () => {
         minute: "2-digit",
       });
     } else if (diffInHours < 168) {
-      // 7 jours
       return date.toLocaleDateString("fr-FR", {
         weekday: "short",
         hour: "2-digit",
@@ -237,6 +232,17 @@ const MessagesPage = () => {
       });
     }
   };
+
+  const filteredConversations = conversations.filter(
+    (conv) =>
+      conv.otherUser?.full_name
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      conv.listing?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      conv.lastMessage?.content
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase())
+  );
 
   if (loading) {
     return (
@@ -253,22 +259,37 @@ const MessagesPage = () => {
 
       <main className="main-content">
         <div className="container">
+          <div className="messages-header-section">
+            <h1>Mes messages</h1>
+            <p>Gérez vos conversations avec les autres utilisateurs</p>
+          </div>
+
           <div className="messages-container">
             <div className="conversations-sidebar">
               <div className="sidebar-header">
-                <h2>Messages</h2>
+                <h2>Conversations</h2>
+                <div className="search-container">
+                  <input
+                    type="text"
+                    placeholder="Rechercher..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="search-input"
+                  />
+                  <span className="search-icon">🔍</span>
+                </div>
               </div>
 
               <div className="conversations-list">
-                {conversations.length > 0 ? (
-                  conversations.map((conversation) => (
+                {filteredConversations.length > 0 ? (
+                  filteredConversations.map((conversation) => (
                     <div
                       key={conversation.id}
                       className={`conversation-item ${
                         selectedConversation?.id === conversation.id
                           ? "active"
                           : ""
-                      }`}
+                      } ${conversation.unreadCount > 0 ? "unread" : ""}`}
                       onClick={() => setSelectedConversation(conversation)}
                     >
                       <div className="conversation-avatar">
@@ -279,6 +300,9 @@ const MessagesPage = () => {
                           />
                         ) : (
                           <span>👤</span>
+                        )}
+                        {conversation.unreadCount > 0 && (
+                          <span className="online-indicator"></span>
                         )}
                       </div>
 
@@ -309,10 +333,10 @@ const MessagesPage = () => {
                             {conversation.lastMessage.sender_id === user.id
                               ? "Vous: "
                               : ""}
-                            {conversation.lastMessage.content.length > 50
+                            {conversation.lastMessage.content.length > 35
                               ? `${conversation.lastMessage.content.substring(
                                   0,
-                                  50
+                                  35
                                 )}...`
                               : conversation.lastMessage.content}
                           </span>
@@ -330,8 +354,9 @@ const MessagesPage = () => {
                     <span className="no-conversations-icon">💬</span>
                     <p>Aucune conversation</p>
                     <small>
-                      Contactez un propriétaire depuis une annonce pour
-                      commencer une conversation
+                      {searchTerm
+                        ? "Aucun résultat pour votre recherche"
+                        : "Contactez un propriétaire depuis une annonce pour commencer une conversation"}
                     </small>
                   </div>
                 )}
@@ -343,6 +368,12 @@ const MessagesPage = () => {
                 <>
                   <div className="messages-header">
                     <div className="chat-user-info">
+                      <button
+                        className="back-button"
+                        onClick={() => setSelectedConversation(null)}
+                      >
+                        ←
+                      </button>
                       <div className="chat-avatar">
                         {selectedConversation.otherUser?.avatar_url ? (
                           <img
@@ -368,22 +399,34 @@ const MessagesPage = () => {
                   </div>
 
                   <div className="messages-content">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`message ${
-                          message.sender_id === user.id ? "sent" : "received"
-                        }`}
-                      >
-                        <div className="message-bubble">
-                          <p>{message.content}</p>
-                          <span className="message-time">
-                            {formatMessageTime(message.created_at)}
-                          </span>
-                        </div>
+                    {messages.length > 0 ? (
+                      <>
+                        {messages.map((message) => (
+                          <div
+                            key={message.id}
+                            className={`message ${
+                              message.sender_id === user.id
+                                ? "sent"
+                                : "received"
+                            }`}
+                          >
+                            <div className="message-bubble">
+                              <p>{message.content}</p>
+                              <span className="message-time">
+                                {formatMessageTime(message.created_at)}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                        <div ref={messagesEndRef} />
+                      </>
+                    ) : (
+                      <div className="no-messages">
+                        <span className="no-messages-icon">💭</span>
+                        <p>Aucun message échangé</p>
+                        <small>Soyez le premier à envoyer un message !</small>
                       </div>
-                    ))}
-                    <div ref={messagesEndRef} />
+                    )}
                   </div>
 
                   <form onSubmit={sendMessage} className="message-form">
@@ -400,7 +443,11 @@ const MessagesPage = () => {
                         disabled={!newMessage.trim() || sendingMessage}
                         className="send-button"
                       >
-                        {sendingMessage ? "⏳" : "📤"}
+                        {sendingMessage ? (
+                          <div className="send-spinner"></div>
+                        ) : (
+                          "📤"
+                        )}
                       </button>
                     </div>
                   </form>

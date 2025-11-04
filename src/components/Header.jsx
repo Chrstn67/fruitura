@@ -1,12 +1,57 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../components/App";
+import { superbase } from "../integrations/superbase/client.js";
 import "../styles/Header.css";
 
 const Header = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (user) {
+      fetchUnreadCount();
+      // Écouter les nouveaux messages en temps réel
+      const subscription = superbase
+        .channel("messages-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "messages_2025_10_29_18_05",
+            filter: `receiver_id=eq.${user.id}`,
+          },
+          () => {
+            fetchUnreadCount();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    }
+  }, [user]);
+
+  const fetchUnreadCount = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await superbase
+        .from("messages_2025_10_29_18_05")
+        .select("id")
+        .eq("receiver_id", user.id)
+        .eq("is_read", false);
+
+      if (error) throw error;
+      setUnreadCount(data?.length || 0);
+    } catch (error) {
+      console.error("Error fetching unread count:", error);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -44,8 +89,15 @@ const Header = () => {
                 >
                   Publier une annonce
                 </Link>
-                <Link to="/messages" className="nav-link" onClick={closeMenu}>
+                <Link
+                  to="/messages"
+                  className="nav-link nav-link-with-badge"
+                  onClick={closeMenu}
+                >
                   Messages
+                  {unreadCount > 0 && (
+                    <span className="unread-badge-header">{unreadCount}</span>
+                  )}
                 </Link>
                 <Link to="/favorites" className="nav-link" onClick={closeMenu}>
                   Favoris
@@ -87,6 +139,9 @@ const Header = () => {
             <span></span>
             <span></span>
             <span></span>
+            {unreadCount > 0 && (
+              <span className="mobile-badge-indicator"></span>
+            )}
           </div>
         </div>
       </div>
