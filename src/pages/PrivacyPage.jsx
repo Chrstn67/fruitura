@@ -1,6 +1,8 @@
 import React from "react";
-import Header from "../components/Header/Header.jsx";
-import Footer from "../components/Footer/Footer.jsx";
+import Header from "../components/Header.jsx";
+import Footer from "../components/Footer.jsx";
+
+import "../styles/PrivacyPage.css";
 
 const PrivacyPage = () => {
   return (
@@ -11,12 +13,6 @@ const PrivacyPage = () => {
         <div className="container container-sm">
           <div className="page-content">
             <h1>Politique de confidentialité</h1>
-
-            <div className="last-updated">
-              <p>
-                <em>Dernière mise à jour : 31 octobre 2024</em>
-              </p>
-            </div>
 
             <div className="content-section">
               <h2>1. Introduction</h2>

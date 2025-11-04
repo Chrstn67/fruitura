@@ -1,7 +1,10 @@
 import React from "react";
+import { Link } from "react-router-dom";
 import "../styles/Footer.css";
 
 const Footer = () => {
+  const currentYear = new Date().getFullYear(); // récupère l'année actuelle
+
   return (
     <footer className="footer">
       <div className="container">
@@ -18,53 +21,38 @@ const Footer = () => {
             <h4>Liens utiles</h4>
             <ul>
               <li>
-                <a href="/about">À propos</a>
+                <Link to="/about">À propos</Link>
               </li>
               <li>
-                <a href="/contact">Contact</a>
+                <Link to="/contact">Contact</Link>
               </li>
               <li>
-                <a href="/terms">Conditions d'utilisation</a>
+                <Link to="/terms">Conditions d'utilisation</Link>
               </li>
               <li>
-                <a href="/privacy">Politique de confidentialité</a>
+                <Link to="/privacy">Politique de confidentialité</Link>
               </li>
             </ul>
           </div>
 
-          <div className="footer-section">
+          {/* <div className="footer-section">
             <h4>Communauté</h4>
             <ul>
               <li>
-                <a href="/help">Aide</a>
+                <Link to="/help">Aide</Link>
               </li>
               <li>
-                <a href="/blog">Blog</a>
+                <Link to="/blog">Blog</Link>
               </li>
               <li>
-                <a href="/faq">FAQ</a>
+                <Link to="/faq">FAQ</Link>
               </li>
             </ul>
-          </div>
-
-          <div className="footer-section">
-            <h4>Suivez-nous</h4>
-            <div className="social-links">
-              <a href="#" aria-label="Facebook">
-                📘
-              </a>
-              <a href="#" aria-label="Twitter">
-                🐦
-              </a>
-              <a href="#" aria-label="Instagram">
-                📷
-              </a>
-            </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="footer-bottom">
-          <p>&copy; 2024 Fruitura. Tous droits réservés.</p>
+          <p>&copy; {currentYear} Fruitura. Tous droits réservés.</p>
         </div>
       </div>
     </footer>

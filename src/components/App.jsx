@@ -23,6 +23,11 @@ import ListingDetailPage from "../pages/ListingDetailPage.jsx";
 import MessagesPage from "../pages/MessagesPage.jsx";
 import FavoritesPage from "../pages/FavoritesPage.jsx";
 import AdminDashboard from "../pages/AdminDashboard.jsx";
+// Ajoutez ces nouvelles pages
+import AboutPage from "../pages/AboutPage.jsx";
+import ContactPage from "../pages/ContactPage.jsx";
+import TermsPage from "../pages/TermsPage.jsx";
+import PrivacyPage from "../pages/PrivacyPage.jsx";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -138,6 +143,11 @@ function App() {
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
+          {/* Ajoutez ces nouvelles routes */}
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
         </Routes>
       </div>
     </AuthContext.Provider>

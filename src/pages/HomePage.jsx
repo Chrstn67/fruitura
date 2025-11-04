@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { superbase } from "../integrations/superbase/client.js";
 import { useAuth } from "../components/App.jsx";
 import Header from "../components/Header.jsx";
@@ -157,12 +158,12 @@ const HomePage = () => {
               </p>
               {!user && (
                 <div className="hero-actions">
-                  <a href="/register" className="btn btn-primary btn-lg">
+                  <Link to="/register" className="btn btn-primary btn-lg">
                     Rejoindre la communauté
-                  </a>
-                  <a href="/login" className="btn btn-outline btn-lg">
+                  </Link>
+                  <Link to="/login" className="btn btn-outline btn-lg">
                     Se connecter
-                  </a>
+                  </Link>
                 </div>
               )}
             </div>
