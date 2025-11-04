@@ -4,6 +4,7 @@ import { superbase } from "../integrations/superbase/client.js";
 import { useAuth } from "../components/App.jsx";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
+import { searchAddresses, geocodeAddress } from "../services/geocoding.js";
 import "../styles/CreateListingPage.css";
 
 const CreateListingPage = () => {
@@ -25,6 +26,9 @@ const CreateListingPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [uploadingPhotos, setUploadingPhotos] = useState(false);
+  const [addressSuggestions, setAddressSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [addressCoordinates, setAddressCoordinates] = useState(null);
 
   const fruitTypes = [
     "Pommes",
@@ -59,23 +63,69 @@ const CreateListingPage = () => {
     }));
   };
 
+  const handleAddressSearch = async (query) => {
+    if (query.length < 3) {
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    try {
+      const suggestions = await searchAddresses(query);
+      setAddressSuggestions(suggestions);
+      setShowSuggestions(suggestions.length > 0);
+    } catch (error) {
+      console.error("Erreur lors de la recherche d'adresse:", error);
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleAddressSelect = async (suggestion) => {
+    setFormData((prev) => ({ ...prev, address: suggestion.label }));
+    setShowSuggestions(false);
+
+    try {
+      const coords = await geocodeAddress(suggestion.label);
+      setAddressCoordinates(coords);
+    } catch (error) {
+      console.error("Erreur lors du géocodage:", error);
+      setAddressCoordinates(null);
+    }
+  };
+
   const handlePhotoUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
 
     setUploadingPhotos(true);
-    const uploadedUrls = [];
 
     try {
-      for (const file of files) {
-        const fileExt = file.name.split(".").pop();
-        const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+      const uploadedUrls = [];
 
-        const { data, error } = await superbase.storage
+      for (const file of files) {
+        // Vérifier la taille du fichier (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          setError("Les photos ne doivent pas dépasser 5MB");
+          continue;
+        }
+
+        // Vérifier le type de fichier
+        if (!file.type.startsWith("image/")) {
+          setError("Veuillez uploader uniquement des images");
+          continue;
+        }
+
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${user.id}/${Date.now()}-${Math.random()
+          .toString(36)
+          .substring(7)}.${fileExt}`;
+
+        const { data, error: uploadError } = await superbase.storage
           .from("listing-photos")
           .upload(fileName, file);
 
-        if (error) throw error;
+        if (uploadError) throw uploadError;
 
         const {
           data: { publicUrl },
@@ -103,37 +153,85 @@ const CreateListingPage = () => {
     }));
   };
 
+  const validateForm = () => {
+    if (!formData.title.trim()) {
+      setError("Le titre est requis");
+      return false;
+    }
+
+    if (!formData.fruitType) {
+      setError("Le type de fruit/légume est requis");
+      return false;
+    }
+
+    if (!formData.address.trim()) {
+      setError("L'adresse est requise");
+      return false;
+    }
+
+    if (
+      !formData.isFree &&
+      (!formData.price || parseFloat(formData.price) < 0)
+    ) {
+      setError("Le prix doit être un nombre positif");
+      return false;
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
+    if (!validateForm()) {
+      setLoading(false);
+      return;
+    }
+
     try {
-      const { data, error } = await superbase
+      // Géocoder l'adresse finale avant soumission
+      let finalCoordinates = addressCoordinates;
+      if (!finalCoordinates) {
+        finalCoordinates = await geocodeAddress(formData.address);
+      }
+
+      const listingData = {
+        user_id: user.id,
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        fruit_type: formData.fruitType,
+        price: formData.isFree ? 0 : parseFloat(formData.price) || 0,
+        is_free: formData.isFree,
+        can_pick_from_tree: formData.canPickFromTree,
+        can_pick_from_ground: formData.canPickFromGround,
+        owner_presence_required: formData.ownerPresenceRequired,
+        available_times: formData.availableTimes.trim(),
+        address: formData.address.trim(),
+        photos: formData.photos,
+        latitude: finalCoordinates ? finalCoordinates[0] : null,
+        longitude: finalCoordinates ? finalCoordinates[1] : null,
+      };
+
+      const { data, error: insertError } = await superbase
         .from("listings_2025_10_29_18_05")
-        .insert({
-          user_id: user.id,
-          title: formData.title,
-          description: formData.description,
-          fruit_type: formData.fruitType,
-          price: formData.isFree ? 0 : parseFloat(formData.price) || 0,
-          is_free: formData.isFree,
-          can_pick_from_tree: formData.canPickFromTree,
-          can_pick_from_ground: formData.canPickFromGround,
-          owner_presence_required: formData.ownerPresenceRequired,
-          available_times: formData.availableTimes,
-          address: formData.address,
-          photos: formData.photos,
-        })
+        .insert(listingData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (insertError) throw insertError;
 
       navigate(`/listing/${data.id}`);
     } catch (error) {
       console.error("Error creating listing:", error);
-      setError("Erreur lors de la création de l'annonce");
+      if (error.message.includes("address")) {
+        setError(
+          "Erreur avec l'adresse fournie. Veuillez vérifier et réessayer."
+        );
+      } else {
+        setError("Erreur lors de la création de l'annonce");
+      }
     } finally {
       setLoading(false);
     }
@@ -171,7 +269,11 @@ const CreateListingPage = () => {
                     onChange={handleChange}
                     required
                     placeholder="Ex: Pommes bio à cueillir dans mon jardin"
+                    maxLength="100"
                   />
+                  <div className="char-count">
+                    {formData.title.length}/100 caractères
+                  </div>
                 </div>
 
                 <div className="form-group">
@@ -200,8 +302,12 @@ const CreateListingPage = () => {
                     value={formData.description}
                     onChange={handleChange}
                     rows="4"
-                    placeholder="Décrivez vos fruits/légumes, leur état, quantité disponible..."
+                    placeholder="Décrivez vos fruits/légumes, leur état, quantité disponible, variété..."
+                    maxLength="500"
                   />
+                  <div className="char-count">
+                    {formData.description.length}/500 caractères
+                  </div>
                 </div>
               </div>
 
@@ -217,13 +323,13 @@ const CreateListingPage = () => {
                       onChange={handleChange}
                     />
                     <span className="checkmark"></span>
-                    Gratuit
+                    Offre gratuite
                   </label>
                 </div>
 
                 {!formData.isFree && (
                   <div className="form-group">
-                    <label htmlFor="price">Prix (€)</label>
+                    <label htmlFor="price">Prix (€) *</label>
                     <input
                       type="number"
                       id="price"
@@ -232,48 +338,54 @@ const CreateListingPage = () => {
                       onChange={handleChange}
                       min="0"
                       step="0.01"
-                      placeholder="Prix en euros"
+                      placeholder="0.00"
+                      required={!formData.isFree}
                     />
+                    <div className="input-help">
+                      Laissez 0 pour une offre gratuite
+                    </div>
                   </div>
                 )}
 
-                <div className="checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      name="canPickFromTree"
-                      checked={formData.canPickFromTree}
-                      onChange={handleChange}
-                    />
-                    <span className="checkmark"></span>
-                    Cueillette sur l'arbre autorisée
-                  </label>
-                </div>
+                <div className="conditions-grid">
+                  <div className="checkbox-group">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        name="canPickFromTree"
+                        checked={formData.canPickFromTree}
+                        onChange={handleChange}
+                      />
+                      <span className="checkmark"></span>
+                      🌳 Cueillette sur l'arbre
+                    </label>
+                  </div>
 
-                <div className="checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      name="canPickFromGround"
-                      checked={formData.canPickFromGround}
-                      onChange={handleChange}
-                    />
-                    <span className="checkmark"></span>
-                    Ramassage au sol autorisé
-                  </label>
-                </div>
+                  <div className="checkbox-group">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        name="canPickFromGround"
+                        checked={formData.canPickFromGround}
+                        onChange={handleChange}
+                      />
+                      <span className="checkmark"></span>
+                      🍂 Ramassage au sol
+                    </label>
+                  </div>
 
-                <div className="checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      name="ownerPresenceRequired"
-                      checked={formData.ownerPresenceRequired}
-                      onChange={handleChange}
-                    />
-                    <span className="checkmark"></span>
-                    Ma présence est requise
-                  </label>
+                  <div className="checkbox-group">
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        name="ownerPresenceRequired"
+                        checked={formData.ownerPresenceRequired}
+                        onChange={handleChange}
+                      />
+                      <span className="checkmark"></span>
+                      👤 Présence requise
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -290,26 +402,61 @@ const CreateListingPage = () => {
                     value={formData.availableTimes}
                     onChange={handleChange}
                     rows="3"
-                    placeholder="Ex: Lundi-Vendredi 18h-20h, Weekend 9h-18h"
+                    placeholder="Ex: Lundi-Vendredi 18h-20h, Weekend 9h-18h&#10;Ou: Sur rendez-vous"
+                    maxLength="200"
                   />
+                  <div className="char-count">
+                    {formData.availableTimes.length}/200 caractères
+                  </div>
                 </div>
 
-                <div className="form-group">
+                <div className="form-group address-group">
                   <label htmlFor="address">Adresse *</label>
                   <input
                     type="text"
                     id="address"
                     name="address"
                     value={formData.address}
-                    onChange={handleChange}
+                    onChange={(e) => {
+                      handleChange(e);
+                      handleAddressSearch(e.target.value);
+                    }}
+                    onFocus={() =>
+                      setShowSuggestions(addressSuggestions.length > 0)
+                    }
                     required
-                    placeholder="Votre adresse (ville, quartier...)"
+                    placeholder="Commencez à taper votre adresse ou nom de commune..."
                   />
+
+                  {showSuggestions && (
+                    <div className="address-suggestions">
+                      {addressSuggestions.map((suggestion, index) => (
+                        <div
+                          key={index}
+                          className="suggestion-item"
+                          onClick={() => handleAddressSelect(suggestion)}
+                        >
+                          {suggestion.label}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {addressCoordinates && (
+                    <div className="address-confirmed">
+                      ✅ Adresse localisée sur la carte
+                    </div>
+                  )}
                 </div>
               </div>
 
               <div className="form-section">
                 <h3>Photos</h3>
+                <div className="photo-upload-info">
+                  <p>
+                    Ajoutez jusqu'à 5 photos pour présenter vos fruits/légumes
+                  </p>
+                </div>
 
                 <div className="photo-upload">
                   <input
@@ -318,12 +465,17 @@ const CreateListingPage = () => {
                     multiple
                     accept="image/*"
                     onChange={handlePhotoUpload}
-                    disabled={uploadingPhotos}
+                    disabled={uploadingPhotos || formData.photos.length >= 5}
                   />
                   <label htmlFor="photos" className="upload-label">
-                    {uploadingPhotos
-                      ? "Téléchargement..."
-                      : "Ajouter des photos"}
+                    {uploadingPhotos ? (
+                      <>
+                        <div className="upload-spinner"></div>
+                        Téléchargement...
+                      </>
+                    ) : (
+                      `📷 Ajouter des photos (${formData.photos.length}/5)`
+                    )}
                   </label>
                 </div>
 
@@ -350,6 +502,7 @@ const CreateListingPage = () => {
                   type="button"
                   className="btn btn-outline"
                   onClick={() => navigate("/")}
+                  disabled={loading}
                 >
                   Annuler
                 </button>

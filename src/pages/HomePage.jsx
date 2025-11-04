@@ -6,6 +6,7 @@ import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
 import FilterBar from "../components/FilterBar.jsx";
 import ListingCard from "../components/ListingCard.jsx";
+import Map from "../components/Map.jsx";
 import "../styles/HomePage.css";
 
 const HomePage = () => {
@@ -193,39 +194,41 @@ const HomePage = () => {
             </div>
 
             {viewMode === "grid" ? (
-              <div className="listings-grid">
-                {filteredListings.length > 0 ? (
-                  filteredListings.map((listing) => (
-                    <ListingCard
-                      key={listing.id}
-                      listing={listing}
-                      onFavoriteToggle={handleFavoriteToggle}
-                    />
-                  ))
-                ) : (
-                  <div className="no-listings">
-                    <div className="no-listings-content">
-                      <span className="no-listings-icon">🍎</span>
-                      <h3>Aucune annonce trouvée</h3>
-                      <p>
-                        Essayez de modifier vos filtres ou soyez le premier à
-                        publier une annonce !
-                      </p>
-                      {user && (
-                        <a href="/create-listing" className="btn btn-primary">
-                          Publier une annonce
-                        </a>
-                      )}
+              <div className="listings-content">
+                <div className="listings-grid">
+                  {filteredListings.length > 0 ? (
+                    filteredListings.map((listing) => (
+                      <ListingCard
+                        key={listing.id}
+                        listing={listing}
+                        onFavoriteToggle={handleFavoriteToggle}
+                      />
+                    ))
+                  ) : (
+                    <div className="no-listings">
+                      <div className="no-listings-content">
+                        <span className="no-listings-icon">🍎</span>
+                        <h3>Aucune annonce trouvée</h3>
+                        <p>
+                          Essayez de modifier vos filtres ou soyez le premier à
+                          publier une annonce !
+                        </p>
+                        {user && (
+                          <Link
+                            to="/create-listing"
+                            className="btn btn-primary"
+                          >
+                            Publier une annonce
+                          </Link>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             ) : (
-              <div className="map-view">
-                <div className="map-placeholder">
-                  <p>🗺️ Vue carte en cours de développement</p>
-                  <p>Les annonces seront affichées sur une carte interactive</p>
-                </div>
+              <div className="map-view-container">
+                <Map listings={filteredListings} />
               </div>
             )}
           </div>

@@ -16,6 +16,7 @@ const MessagesPage = () => {
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showConversations, setShowConversations] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -67,17 +68,18 @@ const MessagesPage = () => {
           message.sender_id === user.id
             ? message.receiver_id
             : message.sender_id;
-        const conversationKey = `${Math.min(user.id, otherUserId)}-${Math.max(
-          user.id,
-          otherUserId
-        )}-${message.listing_id || "general"}`;
+
+        // CORRECTION : Créer une clé de conversation simple et fiable
+        const conversationKey = `${user.id}-${otherUserId}-${
+          message.listing_id || "general"
+        }`;
 
         if (!conversationsMap.has(conversationKey)) {
           conversationsMap.set(conversationKey, {
             id: conversationKey,
             otherUser:
               message.sender_id === user.id ? message.receiver : message.sender,
-            otherUserId,
+            otherUserId: otherUserId,
             listing: message.listings_2025_10_29_18_05,
             lastMessage: message,
             unreadCount: 0,
@@ -85,7 +87,10 @@ const MessagesPage = () => {
         }
 
         const conversation = conversationsMap.get(conversationKey);
-        if (message.created_at > conversation.lastMessage.created_at) {
+        if (
+          new Date(message.created_at) >
+          new Date(conversation.lastMessage.created_at)
+        ) {
           conversation.lastMessage = message;
         }
 
@@ -104,8 +109,20 @@ const MessagesPage = () => {
 
   const fetchMessages = async (conversationId) => {
     try {
-      const [userId1, userId2, listingId] = conversationId.split("-");
+      console.log("Fetching messages for conversation:", conversationId);
+
+      const parts = conversationId.split("-");
+      // CORRECTION : Prendre les 3 premières parties seulement (userID-otherUserID-listingID)
+      const userId1 = parts[0];
+      const userId2 = parts[1];
+      const listingId = parts[2];
+
+      // CORRECTION : Identifier correctement l'autre utilisateur
       const otherUserId = userId1 === user.id ? userId2 : userId1;
+
+      console.log("User ID:", user.id);
+      console.log("Other User ID:", otherUserId);
+      console.log("Listing ID:", listingId);
 
       let query = superbase
         .from("messages_2025_10_29_18_05")
@@ -126,7 +143,12 @@ const MessagesPage = () => {
 
       const { data, error } = await query;
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error:", error);
+        throw error;
+      }
+
+      console.log("Fetched messages:", data);
       setMessages(data || []);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -135,20 +157,26 @@ const MessagesPage = () => {
 
   const markMessagesAsRead = async (conversationId) => {
     try {
-      const [userId1, userId2, listingId] = conversationId.split("-");
+      const parts = conversationId.split("-");
+      const userId1 = parts[0];
+      const userId2 = parts[1];
+      const listingId = parts[2];
+
       const otherUserId = userId1 === user.id ? userId2 : userId1;
 
       let query = superbase
         .from("messages_2025_10_29_18_05")
         .update({ is_read: true })
         .eq("receiver_id", user.id)
-        .eq("sender_id", otherUserId);
+        .eq("sender_id", otherUserId)
+        .eq("is_read", false);
 
       if (listingId !== "general") {
         query = query.eq("listing_id", listingId);
       }
 
-      await query;
+      const { error } = await query;
+      if (error) throw error;
 
       setConversations((prev) =>
         prev.map((conv) =>
@@ -166,7 +194,11 @@ const MessagesPage = () => {
 
     setSendingMessage(true);
     try {
-      const [userId1, userId2, listingId] = selectedConversation.id.split("-");
+      const parts = selectedConversation.id.split("-");
+      const userId1 = parts[0];
+      const userId2 = parts[1];
+      const listingId = parts[2];
+
       const receiverId = userId1 === user.id ? userId2 : userId1;
 
       const messageData = {
@@ -174,7 +206,10 @@ const MessagesPage = () => {
         receiver_id: receiverId,
         content: newMessage.trim(),
         listing_id: listingId !== "general" ? listingId : null,
+        is_read: false,
       };
+
+      console.log("Sending message with data:", messageData);
 
       const { data, error } = await superbase
         .from("messages_2025_10_29_18_05")
@@ -187,7 +222,10 @@ const MessagesPage = () => {
         )
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase insert error:", error);
+        throw error;
+      }
 
       setMessages((prev) => [...prev, data]);
       setNewMessage("");
@@ -195,7 +233,11 @@ const MessagesPage = () => {
       setConversations((prev) =>
         prev.map((conv) =>
           conv.id === selectedConversation.id
-            ? { ...conv, lastMessage: data }
+            ? {
+                ...conv,
+                lastMessage: data,
+                unreadCount: 0,
+              }
             : conv
         )
       );
@@ -244,6 +286,15 @@ const MessagesPage = () => {
         .includes(searchTerm.toLowerCase())
   );
 
+  const toggleConversations = () => {
+    setShowConversations(!showConversations);
+  };
+
+  const handleSelectConversation = (conversation) => {
+    setSelectedConversation(conversation);
+    setShowConversations(false);
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -265,9 +316,22 @@ const MessagesPage = () => {
           </div>
 
           <div className="messages-container">
-            <div className="conversations-sidebar">
+            {/* Sidebar des conversations */}
+            <div
+              className={`conversations-sidebar ${
+                showConversations ? "active" : ""
+              }`}
+            >
               <div className="sidebar-header">
-                <h2>Conversations</h2>
+                <div className="sidebar-header-top">
+                  <h2>Conversations</h2>
+                  <button
+                    className="close-sidebar"
+                    onClick={() => setShowConversations(false)}
+                  >
+                    ×
+                  </button>
+                </div>
                 <div className="search-container">
                   <input
                     type="text"
@@ -290,7 +354,7 @@ const MessagesPage = () => {
                           ? "active"
                           : ""
                       } ${conversation.unreadCount > 0 ? "unread" : ""}`}
-                      onClick={() => setSelectedConversation(conversation)}
+                      onClick={() => handleSelectConversation(conversation)}
                     >
                       <div className="conversation-avatar">
                         {conversation.otherUser?.avatar_url ? (
@@ -363,6 +427,7 @@ const MessagesPage = () => {
               </div>
             </div>
 
+            {/* Zone principale des messages */}
             <div className="messages-main">
               {selectedConversation ? (
                 <>
@@ -370,9 +435,9 @@ const MessagesPage = () => {
                     <div className="chat-user-info">
                       <button
                         className="back-button"
-                        onClick={() => setSelectedConversation(null)}
+                        onClick={toggleConversations}
                       >
-                        ←
+                        ☰
                       </button>
                       <div className="chat-avatar">
                         {selectedConversation.otherUser?.avatar_url ? (
@@ -461,6 +526,12 @@ const MessagesPage = () => {
                       Choisissez une conversation dans la liste pour commencer à
                       échanger
                     </p>
+                    <button
+                      className="btn btn-primary"
+                      onClick={toggleConversations}
+                    >
+                      Voir les conversations
+                    </button>
                   </div>
                 </div>
               )}

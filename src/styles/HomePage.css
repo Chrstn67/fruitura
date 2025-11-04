@@ -2,17 +2,21 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  
+
   .main-content {
     flex: 1;
   }
-  
+
   .hero-section {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    background: linear-gradient(
+      135deg,
+      var(--primary-color),
+      var(--primary-light)
+    );
     color: var(--white);
     padding: 4rem 0;
     text-align: center;
-    
+
     .hero-content {
       h1 {
         font-size: 3rem;
@@ -20,7 +24,7 @@
         margin-bottom: 1rem;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
       }
-      
+
       p {
         font-size: 1.3rem;
         margin-bottom: 2rem;
@@ -29,23 +33,23 @@
         margin-left: auto;
         margin-right: auto;
       }
-      
+
       .hero-actions {
         display: flex;
         gap: 1rem;
         justify-content: center;
         flex-wrap: wrap;
-        
+
         .btn-lg {
           padding: 1rem 2rem;
           font-size: 1.1rem;
           font-weight: 600;
         }
-        
+
         .btn-outline {
           border-color: var(--white);
           color: var(--white);
-          
+
           &:hover {
             background-color: var(--white);
             color: var(--primary-color);
@@ -54,26 +58,26 @@
       }
     }
   }
-  
+
   .listings-section {
     padding: 3rem 0;
-    
+
     .section-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 2rem;
-      
+
       h2 {
         color: var(--primary-color);
         font-size: 2rem;
         font-weight: 600;
       }
-      
+
       .view-controls {
         display: flex;
         gap: 0.5rem;
-        
+
         .view-btn {
           padding: 0.5rem 1rem;
           border: 2px solid var(--border-color);
@@ -82,12 +86,12 @@
           cursor: pointer;
           transition: var(--transition);
           font-size: 0.9rem;
-          
+
           &:hover {
             border-color: var(--primary-color);
             color: var(--primary-color);
           }
-          
+
           &.active {
             background: var(--primary-color);
             color: var(--white);
@@ -96,74 +100,64 @@
         }
       }
     }
-    
-    .listings-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-      gap: 2rem;
-    }
-    
-    .no-listings {
-      grid-column: 1 / -1;
-      display: flex;
-      justify-content: center;
-      padding: 4rem 0;
-      
-      .no-listings-content {
-        text-align: center;
-        max-width: 400px;
-        
-        .no-listings-icon {
-          font-size: 4rem;
-          display: block;
-          margin-bottom: 1rem;
-          opacity: 0.5;
-        }
-        
-        h3 {
-          color: var(--text-color);
-          margin-bottom: 1rem;
-          font-size: 1.5rem;
-        }
-        
-        p {
-          color: var(--text-light);
-          margin-bottom: 2rem;
-          line-height: 1.6;
-        }
+
+    .listings-content {
+      .listings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2rem;
       }
-    }
-    
-    .map-view {
-      .map-placeholder {
-        background: var(--background-color);
-        border: 2px dashed var(--border-color);
-        border-radius: var(--border-radius);
-        padding: 4rem 2rem;
-        text-align: center;
-        color: var(--text-light);
-        
-        p {
-          margin-bottom: 0.5rem;
-          
-          &:first-child {
-            font-size: 1.2rem;
-            font-weight: 500;
+
+      .no-listings {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: center;
+        padding: 4rem 0;
+
+        .no-listings-content {
+          text-align: center;
+          max-width: 400px;
+
+          .no-listings-icon {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+          }
+
+          h3 {
+            color: var(--text-color);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+          }
+
+          p {
+            color: var(--text-light);
+            margin-bottom: 2rem;
+            line-height: 1.6;
           }
         }
       }
     }
+
+    .map-view-container {
+      background: var(--background-color);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      height: 600px;
+    }
   }
-  
+
   .stats-section {
     background: var(--background-color);
     padding: 3rem 0;
-    
+
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 2rem;
-      
+
       .stat-card {
         background: var(--white);
         padding: 2rem;
@@ -171,19 +165,19 @@
         text-align: center;
         box-shadow: var(--shadow);
         transition: var(--transition);
-        
+
         &:hover {
           box-shadow: var(--shadow-hover);
           transform: translateY(-4px);
         }
-        
+
         .stat-number {
           font-size: 2.5rem;
           font-weight: 700;
           color: var(--primary-color);
           margin-bottom: 0.5rem;
         }
-        
+
         .stat-label {
           color: var(--text-light);
           font-weight: 500;
@@ -197,20 +191,20 @@
   .home-page {
     .hero-section {
       padding: 2rem 0;
-      
+
       .hero-content {
         h1 {
           font-size: 2rem;
         }
-        
+
         p {
           font-size: 1.1rem;
         }
-        
+
         .hero-actions {
           flex-direction: column;
           align-items: center;
-          
+
           .btn-lg {
             width: 100%;
             max-width: 300px;
@@ -218,31 +212,42 @@
         }
       }
     }
-    
+
     .listings-section {
       padding: 2rem 0;
-      
+
       .section-header {
         flex-direction: column;
         gap: 1rem;
         text-align: center;
-        
+
         h2 {
           font-size: 1.5rem;
         }
+
+        .view-controls {
+          width: 100%;
+          justify-content: center;
+        }
       }
-      
-      .listings-grid {
-        grid-template-columns: 1fr;
-        gap: 1.5rem;
+
+      .listings-content {
+        .listings-grid {
+          grid-template-columns: 1fr;
+          gap: 1.5rem;
+        }
+      }
+
+      .map-view-container {
+        height: 400px;
       }
     }
-    
+
     .stats-section {
       .stats-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
-        
+
         .stat-card {
           padding: 1.5rem;
         }
