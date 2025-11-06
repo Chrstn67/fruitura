@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@changey/react-leaflet-markercluster": "^4.0.0-rc1",
+    "@emailjs/browser": "^4.4.1",
     "@supabase/supabase-js": "^2.78.0",
     "leaflet": "^1.9.4",
     "leaflet.markercluster": "^1.5.3",

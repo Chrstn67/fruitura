@@ -170,3 +170,44 @@
     }
   }
 }
+/* États de chargement et d'erreur */
+.error-message {
+  text-align: center;
+  background: #ffeaea;
+  border: 1px solid #ff6b6b;
+  border-radius: 8px;
+  padding: 2rem;
+  margin: 2rem 0;
+  color: #d63031;
+}
+
+.error-message p {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: #545b62;
+}
+
+.success-message .btn {
+  margin-top: 1rem;
+  width: auto;
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+}
