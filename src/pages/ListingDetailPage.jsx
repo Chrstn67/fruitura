@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { superbase } from "../integrations/superbase/client.js";
+import { supabase } from "../integrations/supabase/client.js";
 import { useAuth } from "../components/App.jsx";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
-import Rating from "../components/Rating.jsx";
+import Rating from "../components/RatingSystem.jsx";
 import "../styles/ListingDetailPage.css";
 
 const ListingDetailPage = () => {
@@ -32,7 +32,7 @@ const ListingDetailPage = () => {
     try {
       setLoading(true);
 
-      const { data, error } = await superbase
+      const { data, error } = await supabase
         .from("listings_2025_10_29_18_05")
         .select(
           `
@@ -59,7 +59,7 @@ const ListingDetailPage = () => {
 
   const fetchRatings = async () => {
     try {
-      const { data, error } = await superbase
+      const { data, error } = await supabase
         .from("ratings_2025_10_29_18_05")
         .select(
           `
@@ -89,7 +89,7 @@ const ListingDetailPage = () => {
 
     try {
       // Créer une réservation
-      const { error: reservationError } = await superbase
+      const { error: reservationError } = await supabase
         .from("reservations_2025_10_29_18_05")
         .insert({
           listing_id: id,
@@ -101,7 +101,7 @@ const ListingDetailPage = () => {
       if (reservationError) throw reservationError;
 
       // Envoyer un message privé
-      const { error: messageError } = await superbase
+      const { error: messageError } = await supabase
         .from("messages_2025_10_29_18_05")
         .insert({
           sender_id: user.id,
@@ -127,15 +127,13 @@ const ListingDetailPage = () => {
     if (!user || !newRating) return;
 
     try {
-      const { error } = await superbase
-        .from("ratings_2025_10_29_18_05")
-        .insert({
-          listing_id: id,
-          giver_id: listing.user_id,
-          receiver_id: user.id,
-          rating: newRating,
-          comment: ratingComment,
-        });
+      const { error } = await supabase.from("ratings_2025_10_29_18_05").insert({
+        listing_id: id,
+        giver_id: listing.user_id,
+        receiver_id: user.id,
+        rating: newRating,
+        comment: ratingComment,
+      });
 
       if (error) throw error;
 

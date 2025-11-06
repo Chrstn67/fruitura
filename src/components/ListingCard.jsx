@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { superbase } from "../integrations/superbase/client.js";
+import { supabase } from "../integrations/supabase/client.js";
 import { useAuth } from "../components/App.jsx";
-import Rating from "../components/Rating.jsx";
+import Rating from "./RatingSystem.jsx";
 import "../styles/ListingCard.css";
 
 const ListingCard = ({ listing, onFavoriteToggle }) => {
@@ -19,7 +19,7 @@ const ListingCard = ({ listing, onFavoriteToggle }) => {
     setLoading(true);
     try {
       if (isFavorite) {
-        const { error } = await superbase
+        const { error } = await supabase
           .from("user_favorites_2025_10_29_18_05")
           .delete()
           .eq("user_id", user.id)
@@ -30,7 +30,7 @@ const ListingCard = ({ listing, onFavoriteToggle }) => {
           onFavoriteToggle && onFavoriteToggle(listing.id, false);
         }
       } else {
-        const { error } = await superbase
+        const { error } = await supabase
           .from("user_favorites_2025_10_29_18_05")
           .insert({
             user_id: user.id,

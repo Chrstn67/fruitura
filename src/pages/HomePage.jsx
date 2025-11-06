@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { superbase } from "../integrations/superbase/client.js";
+import { supabase } from "../integrations/supabase/client.js";
 import { useAuth } from "../components/App.jsx";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
@@ -29,7 +29,7 @@ const HomePage = () => {
     try {
       setLoading(true);
 
-      let query = superbase
+      let query = supabase
         .from("listings_2025_10_29_18_05")
         .select(
           `
@@ -50,7 +50,7 @@ const HomePage = () => {
       // Récupérer les favoris de l'utilisateur si connecté
       let favoritesData = [];
       if (user) {
-        const { data: favorites } = await superbase
+        const { data: favorites } = await supabase
           .from("user_favorites_2025_10_29_18_05")
           .select("listing_id")
           .eq("user_id", user.id);
@@ -61,7 +61,7 @@ const HomePage = () => {
       // Récupérer les notes moyennes
       const listingsWithExtras = await Promise.all(
         data.map(async (listing) => {
-          const { data: ratings } = await superbase
+          const { data: ratings } = await supabase
             .from("ratings_2025_10_29_18_05")
             .select("rating")
             .eq("giver_id", listing.user_id);

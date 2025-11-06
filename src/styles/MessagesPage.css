@@ -729,8 +729,7 @@
   }
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
-
+/* Responsive Design */
 @media (max-width: 1024px) {
   .messages-container {
     grid-template-columns: 320px 1fr;

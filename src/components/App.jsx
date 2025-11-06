@@ -1,6 +1,6 @@
 import React, { useState, useEffect, createContext, useContext } from "react";
 import { Routes, Route } from "react-router-dom";
-import { superbase } from "../integrations/superbase/client.js";
+import { supabase } from "../integrations/supabase/client.js";
 
 // Context pour l'authentification
 const AuthContext = createContext({});
@@ -18,12 +18,14 @@ import HomePage from "../pages/HomePage.jsx";
 import LoginPage from "../pages/LoginPage.jsx";
 import RegisterPage from "../pages/RegisterPage.jsx";
 import ProfilePage from "../pages/ProfilePage.jsx";
+import ProfileListingsPage from "../pages/ProfileListingsPage.jsx";
+import ProfileReservationsPage from "../pages/ProfileReservationsPage.jsx";
 import CreateListingPage from "../pages/CreateListingPage.jsx";
+import EditListingPage from "../pages/EditListingPage.jsx";
 import ListingDetailPage from "../pages/ListingDetailPage.jsx";
 import MessagesPage from "../pages/MessagesPage.jsx";
 import FavoritesPage from "../pages/FavoritesPage.jsx";
 import AdminDashboard from "../pages/AdminDashboard.jsx";
-// Ajoutez ces nouvelles pages
 import AboutPage from "../pages/AboutPage.jsx";
 import ContactPage from "../pages/ContactPage.jsx";
 import TermsPage from "../pages/TermsPage.jsx";
@@ -36,7 +38,7 @@ function App() {
 
   useEffect(() => {
     // Récupérer la session initiale
-    superbase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -45,7 +47,7 @@ function App() {
     // Écouter les changements d'authentification
     const {
       data: { subscription },
-    } = superbase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -56,7 +58,7 @@ function App() {
 
   const signUp = async (email, password, userData = {}) => {
     try {
-      const { data, error } = await superbase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -74,7 +76,7 @@ function App() {
 
   const signIn = async (email, password) => {
     try {
-      const { data, error } = await superbase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -88,7 +90,7 @@ function App() {
 
   const signOut = async () => {
     try {
-      const { error } = await superbase.auth.signOut();
+      const { error } = await supabase.auth.signOut();
       if (error) throw error;
     } catch (error) {
       console.error("Error signing out:", error);
@@ -97,12 +99,9 @@ function App() {
 
   const resetPassword = async (email) => {
     try {
-      const { data, error } = await superbase.auth.resetPasswordForEmail(
-        email,
-        {
-          redirectTo: `${window.location.origin}/reset-password`,
-        }
-      );
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
 
       if (error) throw error;
       return { data, error: null };
@@ -137,13 +136,21 @@ function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+
+          {/* Routes profil améliorées */}
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/listings" element={<ProfileListingsPage />} />
+          <Route
+            path="/profile/reservations"
+            element={<ProfileReservationsPage />}
+          />
+
           <Route path="/create-listing" element={<CreateListingPage />} />
+          <Route path="/edit-listing/:id" element={<EditListingPage />} />
           <Route path="/listing/:id" element={<ListingDetailPage />} />
           <Route path="/messages" element={<MessagesPage />} />
           <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/admin" element={<AdminDashboard />} />
-          {/* Ajoutez ces nouvelles routes */}
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/terms" element={<TermsPage />} />

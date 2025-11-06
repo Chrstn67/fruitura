@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../components/App";
-import { superbase } from "../integrations/superbase/client.js";
+import { useAuth } from "./App.jsx";
+import { supabase } from "../integrations/supabase/client.js";
 import "../styles/Header.css";
 
 const Header = () => {
@@ -9,12 +9,15 @@ const Header = () => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchUnreadCount();
+      checkAdminStatus();
+
       // Écouter les nouveaux messages en temps réel
-      const subscription = superbase
+      const subscription = supabase
         .channel("messages-changes")
         .on(
           "postgres_changes",
@@ -33,6 +36,8 @@ const Header = () => {
       return () => {
         subscription.unsubscribe();
       };
+    } else {
+      setIsAdmin(false);
     }
   }, [user]);
 
@@ -40,7 +45,7 @@ const Header = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await superbase
+      const { data, error } = await supabase
         .from("messages_2025_10_29_18_05")
         .select("id")
         .eq("receiver_id", user.id)
@@ -53,10 +58,33 @@ const Header = () => {
     }
   };
 
+  const checkAdminStatus = async () => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles_2025_10_29_18_05")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+
+      setIsAdmin(data?.is_admin || false);
+    } catch (error) {
+      console.error("Error checking admin status:", error);
+      setIsAdmin(false);
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
     setIsMenuOpen(false);
+    setIsAdmin(false);
   };
 
   const toggleMenu = () => {
@@ -105,6 +133,17 @@ const Header = () => {
                 <Link to="/profile" className="nav-link" onClick={closeMenu}>
                   Profil
                 </Link>
+                {/* Lien Admin conditionnel */}
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    className="nav-link nav-link-admin"
+                    onClick={closeMenu}
+                  >
+                    <span className="admin-icon">👑</span>
+                    Dashboard
+                  </Link>
+                )}
                 <button
                   onClick={handleSignOut}
                   className="btn btn-outline btn-sm"

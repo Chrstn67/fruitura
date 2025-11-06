@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { superbase } from "../integrations/superbase/client.js";
+import { supabase } from "../integrations/supabase/client.js";
 import { useAuth } from "../components/App.jsx";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
@@ -121,7 +121,7 @@ const CreateListingPage = () => {
           .toString(36)
           .substring(7)}.${fileExt}`;
 
-        const { data, error: uploadError } = await superbase.storage
+        const { data, error: uploadError } = await supabase.storage
           .from("listing-photos")
           .upload(fileName, file);
 
@@ -129,7 +129,7 @@ const CreateListingPage = () => {
 
         const {
           data: { publicUrl },
-        } = superbase.storage.from("listing-photos").getPublicUrl(fileName);
+        } = supabase.storage.from("listing-photos").getPublicUrl(fileName);
 
         uploadedUrls.push(publicUrl);
       }
@@ -214,7 +214,7 @@ const CreateListingPage = () => {
         longitude: finalCoordinates ? finalCoordinates[1] : null,
       };
 
-      const { data, error: insertError } = await superbase
+      const { data, error: insertError } = await supabase
         .from("listings_2025_10_29_18_05")
         .insert(listingData)
         .select()

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { superbase } from "../integrations/superbase/client.js";
+import { supabase } from "../integrations/supabase/client.js";
 import { useAuth } from "../components/App.jsx";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
@@ -29,8 +29,14 @@ const MessagesPage = () => {
 
   useEffect(() => {
     if (selectedConversation) {
-      fetchMessages(selectedConversation.id);
-      markMessagesAsRead(selectedConversation.id);
+      fetchMessages(
+        selectedConversation.otherUserId,
+        selectedConversation.listingId
+      );
+      markMessagesAsRead(
+        selectedConversation.otherUserId,
+        selectedConversation.listingId
+      );
     }
   }, [selectedConversation]);
 
@@ -46,7 +52,7 @@ const MessagesPage = () => {
     try {
       setLoading(true);
 
-      const { data: messagesData, error } = await superbase
+      const { data: messagesData, error } = await supabase
         .from("messages_2025_10_29_18_05")
         .select(
           `
@@ -68,11 +74,10 @@ const MessagesPage = () => {
           message.sender_id === user.id
             ? message.receiver_id
             : message.sender_id;
+        const listingId = message.listing_id || "general";
 
-        // CORRECTION : Créer une clé de conversation simple et fiable
-        const conversationKey = `${user.id}-${otherUserId}-${
-          message.listing_id || "general"
-        }`;
+        // Créer une clé unique pour la conversation
+        const conversationKey = `${otherUserId}-${listingId}`;
 
         if (!conversationsMap.has(conversationKey)) {
           conversationsMap.set(conversationKey, {
@@ -80,6 +85,7 @@ const MessagesPage = () => {
             otherUser:
               message.sender_id === user.id ? message.receiver : message.sender,
             otherUserId: otherUserId,
+            listingId: listingId,
             listing: message.listings_2025_10_29_18_05,
             lastMessage: message,
             unreadCount: 0,
@@ -107,24 +113,15 @@ const MessagesPage = () => {
     }
   };
 
-  const fetchMessages = async (conversationId) => {
+  const fetchMessages = async (otherUserId, listingId) => {
     try {
-      console.log("Fetching messages for conversation:", conversationId);
+      console.log("Fetching messages for:", {
+        otherUserId,
+        listingId,
+        currentUserId: user.id,
+      });
 
-      const parts = conversationId.split("-");
-      // CORRECTION : Prendre les 3 premières parties seulement (userID-otherUserID-listingID)
-      const userId1 = parts[0];
-      const userId2 = parts[1];
-      const listingId = parts[2];
-
-      // CORRECTION : Identifier correctement l'autre utilisateur
-      const otherUserId = userId1 === user.id ? userId2 : userId1;
-
-      console.log("User ID:", user.id);
-      console.log("Other User ID:", otherUserId);
-      console.log("Listing ID:", listingId);
-
-      let query = superbase
+      let query = supabase
         .from("messages_2025_10_29_18_05")
         .select(
           `
@@ -137,7 +134,7 @@ const MessagesPage = () => {
         )
         .order("created_at", { ascending: true });
 
-      if (listingId !== "general") {
+      if (listingId && listingId !== "general") {
         query = query.eq("listing_id", listingId);
       }
 
@@ -155,32 +152,28 @@ const MessagesPage = () => {
     }
   };
 
-  const markMessagesAsRead = async (conversationId) => {
+  const markMessagesAsRead = async (otherUserId, listingId) => {
     try {
-      const parts = conversationId.split("-");
-      const userId1 = parts[0];
-      const userId2 = parts[1];
-      const listingId = parts[2];
-
-      const otherUserId = userId1 === user.id ? userId2 : userId1;
-
-      let query = superbase
+      let query = supabase
         .from("messages_2025_10_29_18_05")
         .update({ is_read: true })
         .eq("receiver_id", user.id)
         .eq("sender_id", otherUserId)
         .eq("is_read", false);
 
-      if (listingId !== "general") {
+      if (listingId && listingId !== "general") {
         query = query.eq("listing_id", listingId);
       }
 
       const { error } = await query;
       if (error) throw error;
 
+      // Mettre à jour le compteur local
       setConversations((prev) =>
         prev.map((conv) =>
-          conv.id === conversationId ? { ...conv, unreadCount: 0 } : conv
+          conv.otherUserId === otherUserId && conv.listingId === listingId
+            ? { ...conv, unreadCount: 0 }
+            : conv
         )
       );
     } catch (error) {
@@ -194,24 +187,20 @@ const MessagesPage = () => {
 
     setSendingMessage(true);
     try {
-      const parts = selectedConversation.id.split("-");
-      const userId1 = parts[0];
-      const userId2 = parts[1];
-      const listingId = parts[2];
-
-      const receiverId = userId1 === user.id ? userId2 : userId1;
-
       const messageData = {
         sender_id: user.id,
-        receiver_id: receiverId,
+        receiver_id: selectedConversation.otherUserId,
         content: newMessage.trim(),
-        listing_id: listingId !== "general" ? listingId : null,
+        listing_id:
+          selectedConversation.listingId !== "general"
+            ? selectedConversation.listingId
+            : null,
         is_read: false,
       };
 
       console.log("Sending message with data:", messageData);
 
-      const { data, error } = await superbase
+      const { data, error } = await supabase
         .from("messages_2025_10_29_18_05")
         .insert(messageData)
         .select(
@@ -230,14 +219,12 @@ const MessagesPage = () => {
       setMessages((prev) => [...prev, data]);
       setNewMessage("");
 
+      // Mettre à jour la conversation
       setConversations((prev) =>
         prev.map((conv) =>
-          conv.id === selectedConversation.id
-            ? {
-                ...conv,
-                lastMessage: data,
-                unreadCount: 0,
-              }
+          conv.otherUserId === selectedConversation.otherUserId &&
+          conv.listingId === selectedConversation.listingId
+            ? { ...conv, lastMessage: data, unreadCount: 0 }
             : conv
         )
       );
