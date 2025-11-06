@@ -1,7 +1,7 @@
 // src/components/Header.jsx
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../components/App.jsx";
+import { useAuth } from "./App.jsx";
 import { supabase } from "../integrations/supabase/client.js";
 import "../styles/Header.css";
 
