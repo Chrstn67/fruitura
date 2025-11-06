@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client.js";
 import { useAuth } from "../components/App.jsx";
 import Header from "../components/Header.jsx";
@@ -8,8 +8,9 @@ import ListingCard from "../components/ListingCard.jsx";
 import "../styles/ProfilePage.css";
 
 const ProfileListingsPage = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [userListings, setUserListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -86,6 +87,12 @@ const ProfileListingsPage = () => {
     navigate(`/edit-listing/${listingId}`);
   };
 
+  // Même méthode de déconnexion que dans Header
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -116,17 +123,35 @@ const ProfileListingsPage = () => {
               >
                 Nouvelle annonce
               </button>
+              <button className="btn btn-danger" onClick={handleSignOut}>
+                Déconnexion
+              </button>
             </div>
           </div>
 
           <div className="profile-nav">
-            <Link to="/profile" className="profile-nav-link">
+            <Link
+              to="/profile"
+              className={`profile-nav-link ${
+                location.pathname === "/profile" ? "active" : ""
+              }`}
+            >
               📊 Vue d'ensemble
             </Link>
-            <Link to="/profile/listings" className="profile-nav-link active">
+            <Link
+              to="/profile/listings"
+              className={`profile-nav-link ${
+                location.pathname === "/profile/listings" ? "active" : ""
+              }`}
+            >
               📝 Mes annonces ({userListings.length})
             </Link>
-            <Link to="/profile/reservations" className="profile-nav-link">
+            <Link
+              to="/profile/reservations"
+              className={`profile-nav-link ${
+                location.pathname === "/profile/reservations" ? "active" : ""
+              }`}
+            >
               📅 Mes réservations
             </Link>
           </div>

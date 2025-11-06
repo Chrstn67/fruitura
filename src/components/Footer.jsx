@@ -1,15 +1,26 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 import "../styles/Footer.css";
 
 const Footer = () => {
-  const currentYear = new Date().getFullYear(); // récupère l'année actuelle
+  const currentYear = new Date().getFullYear();
+  const location = useLocation();
+
+  // Scroll vers le haut quand la location change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
 
   return (
     <footer className="footer">
       <div className="container">
         <div className="footer-content">
           <div className="footer-section">
+            <img
+              src="/Logo-Fruitura.png"
+              className="logo-icon"
+              alt="Fruitura"
+            />
             <h3>Fruitura</h3>
             <p>
               Partagez vos fruits et légumes pour réduire le gaspillage
@@ -53,6 +64,7 @@ const Footer = () => {
 
         <div className="footer-bottom">
           <p>&copy; {currentYear} Fruitura. Tous droits réservés.</p>
+          <img src="/Logo.jpg" className="logo-icon" alt="Logo" />
         </div>
       </div>
     </footer>

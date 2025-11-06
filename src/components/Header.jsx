@@ -100,7 +100,7 @@ const Header = () => {
       <div className="container">
         <div className="header-content">
           <Link to="/" className="logo" onClick={closeMenu}>
-            <span className="logo-icon">🍎</span>
+            <img src="/Logo-Fruitura.png" className="logo-icon" />
             <span className="logo-text">Fruitura</span>
           </Link>
 

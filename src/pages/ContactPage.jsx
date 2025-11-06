@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
-
 import "../styles/ContactPage.css";
 
 const ContactPage = () => {
@@ -12,6 +11,11 @@ const ContactPage = () => {
     message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+
+  // Scroll vers le haut au chargement de la page
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const handleChange = (e) => {
     setFormData({
@@ -107,7 +111,7 @@ const ContactPage = () => {
               </form>
             )}
 
-            <div className="contact-details">
+            {/* <div className="contact-details">
               <h2>Autres moyens de nous contacter</h2>
               <div className="contact-methods">
                 <div className="contact-method">
@@ -122,7 +126,7 @@ const ContactPage = () => {
                   </p>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </main>

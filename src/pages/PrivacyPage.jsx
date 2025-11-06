@@ -1,10 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
-
 import "../styles/PrivacyPage.css";
 
 const PrivacyPage = () => {
+  // Scroll vers le haut au chargement de la page
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="privacy-page">
       <Header />
@@ -26,7 +30,9 @@ const PrivacyPage = () => {
 
             <div className="content-section">
               <h2>2. Données collectées</h2>
-              <h3>Informations que vous nous fournissez :</h3>
+              <h3>
+                Informations que vous nous fournissez <i>consciemment</i> :
+              </h3>
               <ul>
                 <li>Nom et prénom</li>
                 <li>Adresse email</li>
@@ -34,14 +40,6 @@ const PrivacyPage = () => {
                 <li>Adresse (pour la localisation des annonces)</li>
                 <li>Photos des fruits et légumes</li>
                 <li>Messages échangés sur la plateforme</li>
-              </ul>
-
-              <h3>Données collectées automatiquement :</h3>
-              <ul>
-                <li>Adresse IP</li>
-                <li>Informations sur votre navigateur</li>
-                <li>Données d'utilisation de la plateforme</li>
-                <li>Cookies techniques</li>
               </ul>
             </div>
 
@@ -51,7 +49,7 @@ const PrivacyPage = () => {
               <ul>
                 <li>Fournir et améliorer nos services</li>
                 <li>Faciliter les échanges entre utilisateurs</li>
-                <li>Vous envoyer des notifications importantes</li>
+                <li>Vous envoyer des notifications</li>
                 <li>Assurer la sécurité de la plateforme</li>
                 <li>Respecter nos obligations légales</li>
               </ul>
@@ -110,7 +108,7 @@ const PrivacyPage = () => {
               </ul>
             </div>
 
-            <div className="content-section">
+            {/* <div className="content-section">
               <h2>7. Cookies</h2>
               <p>
                 Nous utilisons des cookies techniques nécessaires au
@@ -118,10 +116,10 @@ const PrivacyPage = () => {
                 navigateur pour refuser les cookies, mais cela peut affecter le
                 fonctionnement du site.
               </p>
-            </div>
+            </div> */}
 
             <div className="content-section">
-              <h2>8. Conservation des données</h2>
+              <h2>7. Conservation des données</h2>
               <p>
                 Nous conservons vos données personnelles aussi longtemps que
                 nécessaire pour fournir nos services ou respecter nos
@@ -131,11 +129,21 @@ const PrivacyPage = () => {
             </div>
 
             <div className="content-section">
-              <h2>9. Contact</h2>
+              <h2>8. Contact</h2>
               <p>
                 Pour exercer vos droits ou pour toute question concernant cette
-                politique de confidentialité, contactez-nous à :{" "}
-                <strong>privacy@Fruitura.fr</strong>
+                politique de confidentialité, contactez-nous contactez-nous
+                via&nbsp;
+                <strong>
+                  <a
+                    href="https://fruitura.vercel.app/contact"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    le formulaire de contact
+                  </a>
+                </strong>
+                .
               </p>
             </div>
           </div>

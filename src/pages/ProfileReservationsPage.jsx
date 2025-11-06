@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client.js";
 import { useAuth } from "../components/App.jsx";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
-import "../styles/ProfilePage.css";
+import "../styles/ProfileReservationsPage.css";
 
 const ProfileReservationsPage = () => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [userReservations, setUserReservations] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -45,6 +46,12 @@ const ProfileReservationsPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Même méthode de déconnexion que dans Header
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
   };
 
   const formatDate = (dateString) => {
@@ -111,19 +118,34 @@ const ProfileReservationsPage = () => {
               <Link to="/profile" className="btn btn-outline">
                 ← Retour au profil
               </Link>
+              <button className="btn btn-danger" onClick={handleSignOut}>
+                Déconnexion
+              </button>
             </div>
           </div>
 
           <div className="profile-nav">
-            <Link to="/profile" className="profile-nav-link">
+            <Link
+              to="/profile"
+              className={`profile-nav-link ${
+                location.pathname === "/profile" ? "active" : ""
+              }`}
+            >
               📊 Vue d'ensemble
             </Link>
-            <Link to="/profile/listings" className="profile-nav-link">
+            <Link
+              to="/profile/listings"
+              className={`profile-nav-link ${
+                location.pathname === "/profile/listings" ? "active" : ""
+              }`}
+            >
               📝 Mes annonces
             </Link>
             <Link
               to="/profile/reservations"
-              className="profile-nav-link active"
+              className={`profile-nav-link ${
+                location.pathname === "/profile/reservations" ? "active" : ""
+              }`}
             >
               📅 Mes réservations ({userReservations.length})
             </Link>

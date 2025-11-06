@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client.js";
 import { useAuth } from "../components/App.jsx";
 import Header from "../components/Header.jsx";
@@ -9,6 +9,7 @@ import "../styles/ProfilePage.css";
 const ProfilePage = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [profile, setProfile] = useState(null);
   const [userListings, setUserListings] = useState([]);
   const [userReservations, setUserReservations] = useState([]);
@@ -55,9 +56,8 @@ const ProfilePage = () => {
     try {
       const { data, error } = await supabase
         .from("listings_2025_10_29_18_05")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .select("id")
+        .eq("user_id", user.id);
 
       if (error) throw error;
       setUserListings(data || []);
@@ -113,6 +113,12 @@ const ProfilePage = () => {
     }
   };
 
+  // Même méthode de déconnexion que dans Header
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("fr-FR", {
       year: "numeric",
@@ -128,6 +134,11 @@ const ProfilePage = () => {
         <p>Chargement du profil...</p>
       </div>
     );
+  }
+
+  // Protection contre user null (au cas où)
+  if (!user) {
+    return null; // ou redirection vers login
   }
 
   return (
@@ -147,7 +158,7 @@ const ProfilePage = () => {
               </div>
               <div className="profile-details">
                 <h1>{profile?.full_name || "Utilisateur"}</h1>
-                <p className="profile-email">{user.email}</p>
+                <p className="profile-email">{user?.email}</p>
                 <p className="profile-joined">
                   Membre depuis {formatDate(profile?.created_at)}
                 </p>
@@ -160,7 +171,10 @@ const ProfilePage = () => {
               >
                 {editMode ? "Annuler" : "Modifier le profil"}
               </button>
-              <button className="btn btn-danger" onClick={signOut}>
+              <button
+                className="btn btn-danger"
+                onClick={handleSignOut} // Utilisation de la nouvelle méthode
+              >
                 Déconnexion
               </button>
             </div>
@@ -168,13 +182,28 @@ const ProfilePage = () => {
 
           {/* Navigation entre les pages profil */}
           <div className="profile-nav">
-            <Link to="/profile" className="profile-nav-link active">
+            <Link
+              to="/profile"
+              className={`profile-nav-link ${
+                location.pathname === "/profile" ? "active" : ""
+              }`}
+            >
               📊 Vue d'ensemble
             </Link>
-            <Link to="/profile/listings" className="profile-nav-link">
+            <Link
+              to="/profile/listings"
+              className={`profile-nav-link ${
+                location.pathname === "/profile/listings" ? "active" : ""
+              }`}
+            >
               📝 Mes annonces ({userListings.length})
             </Link>
-            <Link to="/profile/reservations" className="profile-nav-link">
+            <Link
+              to="/profile/reservations"
+              className={`profile-nav-link ${
+                location.pathname === "/profile/reservations" ? "active" : ""
+              }`}
+            >
               📅 Mes réservations ({userReservations.length})
             </Link>
           </div>
@@ -295,7 +324,7 @@ const ProfilePage = () => {
                     </div>
                     <div className="info-item">
                       <label>Email</label>
-                      <span>{user.email}</span>
+                      <span>{user?.email}</span>
                     </div>
                     <div className="info-item">
                       <label>Téléphone</label>

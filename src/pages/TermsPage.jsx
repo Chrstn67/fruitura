@@ -1,10 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
-
 import "../styles/TermsPage.css";
 
 const TermsPage = () => {
+  // Scroll vers le haut au chargement de la page
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   return (
     <div className="terms-page">
       <Header />
@@ -16,7 +20,7 @@ const TermsPage = () => {
 
             <div className="last-updated">
               <p>
-                <em>Dernière mise à jour : 31 octobre 2024</em>
+                <em>Dernière mise à jour : 06 novembre 2025</em>
               </p>
             </div>
 
@@ -49,7 +53,7 @@ const TermsPage = () => {
                 <li>Vous êtes responsable de la sécurité de votre compte</li>
                 <li>Un seul compte par personne est autorisé</li>
                 <li>
-                  Vous devez avoir au moins 16 ans pour utiliser le service
+                  Vous devez avoir au moins 18 ans pour utiliser le service
                 </li>
               </ul>
             </div>
@@ -104,8 +108,18 @@ const TermsPage = () => {
             <div className="content-section">
               <h2>8. Contact</h2>
               <p>
-                Pour toute question concernant ces conditions d'utilisation,
-                contactez-nous à :<strong> contact@Fruitura.fr</strong>
+                Pour toute question concernant les présentes conditions
+                d'utilisation, contactez-nous via&nbsp;
+                <strong>
+                  <a
+                    href="https://fruitura.vercel.app/contact"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    le formulaire de contact
+                  </a>
+                </strong>
+                .
               </p>
             </div>
           </div>
