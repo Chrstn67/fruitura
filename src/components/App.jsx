@@ -1,6 +1,28 @@
+// src/App.jsx
 import React, { useState, useEffect, createContext, useContext } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client.js";
+
+//Composants
+import Header from "./Header.jsx";
+
+// Pages
+import HomePage from "../pages/HomePage.jsx";
+import LoginPage from "../pages/LoginPage.jsx";
+import RegisterPage from "../pages/RegisterPage.jsx";
+import ProfilePage from "../pages/ProfilePage.jsx";
+import ProfileListingsPage from "../pages/ProfileListingsPage.jsx";
+import ProfileReservationsPage from "../pages/ProfileReservationsPage.jsx";
+import CreateListingPage from "../pages/CreateListingPage.jsx";
+import EditListingPage from "../pages/EditListingPage.jsx";
+import ListingDetailPage from "../pages/ListingDetailPage.jsx";
+import MessagesPage from "../pages/MessagesPage.jsx";
+import FavoritesPage from "../pages/FavoritesPage.jsx";
+import AdminDashboard from "../pages/AdminDashboard.jsx";
+import AboutPage from "../pages/AboutPage.jsx";
+import ContactPage from "../pages/ContactPage.jsx";
+import TermsPage from "../pages/TermsPage.jsx";
+import PrivacyPage from "../pages/PrivacyPage.jsx";
 
 // Context pour l'authentification
 const AuthContext = createContext({});
@@ -24,32 +46,17 @@ const ScrollToTop = () => {
   return null;
 };
 
-// Pages
-import HomePage from "../pages/HomePage.jsx";
-import LoginPage from "../pages/LoginPage.jsx";
-import RegisterPage from "../pages/RegisterPage.jsx";
-import ProfilePage from "../pages/ProfilePage.jsx";
-import ProfileListingsPage from "../pages/ProfileListingsPage.jsx";
-import ProfileReservationsPage from "../pages/ProfileReservationsPage.jsx";
-import CreateListingPage from "../pages/CreateListingPage.jsx";
-import EditListingPage from "../pages/EditListingPage.jsx";
-import ListingDetailPage from "../pages/ListingDetailPage.jsx";
-import MessagesPage from "../pages/MessagesPage.jsx";
-import FavoritesPage from "../pages/FavoritesPage.jsx";
-import AdminDashboard from "../pages/AdminDashboard.jsx";
-import AboutPage from "../pages/AboutPage.jsx";
-import ContactPage from "../pages/ContactPage.jsx";
-import TermsPage from "../pages/TermsPage.jsx";
-import PrivacyPage from "../pages/PrivacyPage.jsx";
-
 function App() {
   const [user, setUser] = useState(null);
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log("🔐 Initialisation de l'authentification...");
+
     // Récupérer la session initiale
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("📦 Session récupérée:", session);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -59,6 +66,7 @@ function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("🔄 Changement d'authentification:", event, session);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -69,6 +77,7 @@ function App() {
 
   const signUp = async (email, password, userData = {}) => {
     try {
+      console.log("📝 Tentative d'inscription pour:", email);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -79,44 +88,59 @@ function App() {
       });
 
       if (error) throw error;
+      console.log("✅ Inscription réussie");
       return { data, error: null };
     } catch (error) {
+      console.error("❌ Erreur d'inscription:", error);
       return { data: null, error };
     }
   };
 
   const signIn = async (email, password) => {
     try {
+      console.log("🔑 Tentative de connexion pour:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
+      console.log("✅ Connexion réussie");
       return { data, error: null };
     } catch (error) {
+      console.error("❌ Erreur de connexion:", error);
       return { data: null, error };
     }
   };
 
   const signOut = async () => {
     try {
+      console.log("🚪 Tentative de déconnexion...");
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+
+      // FORCER le rafraîchissement de l'état utilisateur
+      setUser(null);
+      setSession(null);
+      console.log("✅ Déconnexion réussie");
     } catch (error) {
-      console.error("Error signing out:", error);
+      console.error("❌ Erreur de déconnexion:", error);
+      throw error;
     }
   };
 
   const resetPassword = async (email) => {
     try {
+      console.log("🔐 Réinitialisation mot de passe pour:", email);
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) throw error;
+      console.log("✅ Email de réinitialisation envoyé");
       return { data, error: null };
     } catch (error) {
+      console.error("❌ Erreur réinitialisation:", error);
       return { data: null, error };
     }
   };
@@ -144,30 +168,33 @@ function App() {
     <AuthContext.Provider value={authValue}>
       <div className="App">
         <ScrollToTop />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
 
-          {/* Routes profil améliorées */}
-          <Route path="/profile" element={<ProfilePage />} />
-          <Route path="/profile/listings" element={<ProfileListingsPage />} />
-          <Route
-            path="/profile/reservations"
-            element={<ProfileReservationsPage />}
-          />
+        <main>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
 
-          <Route path="/create-listing" element={<CreateListingPage />} />
-          <Route path="/edit-listing/:id" element={<EditListingPage />} />
-          <Route path="/listing/:id" element={<ListingDetailPage />} />
-          <Route path="/messages" element={<MessagesPage />} />
-          <Route path="/favorites" element={<FavoritesPage />} />
-          <Route path="/admin" element={<AdminDashboard />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/terms" element={<TermsPage />} />
-          <Route path="/privacy" element={<PrivacyPage />} />
-        </Routes>
+            {/* Routes profil améliorées */}
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/profile/listings" element={<ProfileListingsPage />} />
+            <Route
+              path="/profile/reservations"
+              element={<ProfileReservationsPage />}
+            />
+
+            <Route path="/create-listing" element={<CreateListingPage />} />
+            <Route path="/edit-listing/:id" element={<EditListingPage />} />
+            <Route path="/listing/:id" element={<ListingDetailPage />} />
+            <Route path="/messages" element={<MessagesPage />} />
+            <Route path="/favorites" element={<FavoritesPage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/terms" element={<TermsPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
+          </Routes>
+        </main>
       </div>
     </AuthContext.Provider>
   );

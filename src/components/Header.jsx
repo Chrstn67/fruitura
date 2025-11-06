@@ -12,13 +12,17 @@ const Header = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  // Debugging
-  console.log("User dans Header:", user);
-  console.log("useAuth retourne:", { user, signOut });
+  // Debugging détaillé
+  console.log("=== 🎯 HEADER DEBUG ===");
+  console.log("User:", user);
+  console.log("User ID:", user?.id);
+  console.log("isAdmin:", isAdmin);
+  console.log("unreadCount:", unreadCount);
+  console.log("======================");
 
   useEffect(() => {
     if (user) {
-      console.log("Utilisateur connecté, fetching data...");
+      console.log("🔍 Utilisateur connecté, fetching data...");
       fetchUnreadCount();
       checkAdminStatus();
 
@@ -43,7 +47,7 @@ const Header = () => {
         subscription.unsubscribe();
       };
     } else {
-      console.log("Aucun utilisateur connecté");
+      console.log("👤 Aucun utilisateur connecté");
       setIsAdmin(false);
       setUnreadCount(0);
     }
@@ -53,7 +57,7 @@ const Header = () => {
     if (!user) return;
 
     try {
-      console.log("Fetching unread messages for user:", user.id);
+      console.log("📨 Fetching unread messages for user:", user.id);
       const { data, error } = await supabase
         .from("messages_2025_10_29_18_05")
         .select("id")
@@ -61,10 +65,10 @@ const Header = () => {
         .eq("is_read", false);
 
       if (error) throw error;
-      console.log("Unread messages count:", data?.length || 0);
+      console.log("✅ Unread messages count:", data?.length || 0);
       setUnreadCount(data?.length || 0);
     } catch (error) {
-      console.error("Error fetching unread count:", error);
+      console.error("❌ Error fetching unread count:", error);
     }
   };
 
@@ -75,7 +79,7 @@ const Header = () => {
     }
 
     try {
-      console.log("Checking admin status for user:", user.id);
+      console.log("👑 Checking admin status for user:", user.id);
       const { data, error } = await supabase
         .from("profiles_2025_10_29_18_05")
         .select("is_admin")
@@ -84,20 +88,30 @@ const Header = () => {
 
       if (error) throw error;
 
-      console.log("Admin status:", data?.is_admin || false);
+      console.log("✅ Admin status:", data?.is_admin || false);
       setIsAdmin(data?.is_admin || false);
     } catch (error) {
-      console.error("Error checking admin status:", error);
+      console.error("❌ Error checking admin status:", error);
       setIsAdmin(false);
     }
   };
 
   const handleSignOut = async () => {
-    console.log("Déconnexion...");
-    await signOut();
-    navigate("/");
-    setIsMenuOpen(false);
-    setIsAdmin(false);
+    console.log("🚪 Tentative de déconnexion depuis Header...");
+    try {
+      await signOut();
+      console.log("✅ Déconnexion réussie depuis Header");
+      navigate("/");
+      setIsMenuOpen(false);
+      setIsAdmin(false);
+
+      // Forcer un re-render
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
+    } catch (error) {
+      console.error("❌ Erreur lors de la déconnexion:", error);
+    }
   };
 
   const toggleMenu = () => {
