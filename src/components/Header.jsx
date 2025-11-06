@@ -1,6 +1,7 @@
+// src/components/Header.jsx
 import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "./App.jsx";
+import { useAuth } from "../components/App.jsx";
 import { supabase } from "../integrations/supabase/client.js";
 import "../styles/Header.css";
 
@@ -11,8 +12,13 @@ const Header = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
 
+  // Debugging
+  console.log("User dans Header:", user);
+  console.log("useAuth retourne:", { user, signOut });
+
   useEffect(() => {
     if (user) {
+      console.log("Utilisateur connecté, fetching data...");
       fetchUnreadCount();
       checkAdminStatus();
 
@@ -37,7 +43,9 @@ const Header = () => {
         subscription.unsubscribe();
       };
     } else {
+      console.log("Aucun utilisateur connecté");
       setIsAdmin(false);
+      setUnreadCount(0);
     }
   }, [user]);
 
@@ -45,6 +53,7 @@ const Header = () => {
     if (!user) return;
 
     try {
+      console.log("Fetching unread messages for user:", user.id);
       const { data, error } = await supabase
         .from("messages_2025_10_29_18_05")
         .select("id")
@@ -52,6 +61,7 @@ const Header = () => {
         .eq("is_read", false);
 
       if (error) throw error;
+      console.log("Unread messages count:", data?.length || 0);
       setUnreadCount(data?.length || 0);
     } catch (error) {
       console.error("Error fetching unread count:", error);
@@ -65,6 +75,7 @@ const Header = () => {
     }
 
     try {
+      console.log("Checking admin status for user:", user.id);
       const { data, error } = await supabase
         .from("profiles_2025_10_29_18_05")
         .select("is_admin")
@@ -73,6 +84,7 @@ const Header = () => {
 
       if (error) throw error;
 
+      console.log("Admin status:", data?.is_admin || false);
       setIsAdmin(data?.is_admin || false);
     } catch (error) {
       console.error("Error checking admin status:", error);
@@ -81,6 +93,7 @@ const Header = () => {
   };
 
   const handleSignOut = async () => {
+    console.log("Déconnexion...");
     await signOut();
     navigate("/");
     setIsMenuOpen(false);
@@ -100,7 +113,11 @@ const Header = () => {
       <div className="container">
         <div className="header-content">
           <Link to="/" className="logo" onClick={closeMenu}>
-            <img src="/Logo-Fruitura.png" className="logo-icon" />
+            <img
+              src="/Logo-Fruitura.png"
+              alt="Fruitura"
+              className="logo-icon"
+            />
             <span className="logo-text">Fruitura</span>
           </Link>
 
@@ -108,6 +125,8 @@ const Header = () => {
             <Link to="/" className="nav-link" onClick={closeMenu}>
               Accueil
             </Link>
+
+            {/* Section conditionnelle pour utilisateur connecté/déconnecté */}
             {user ? (
               <>
                 <Link
