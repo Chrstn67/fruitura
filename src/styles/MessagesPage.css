@@ -38,7 +38,7 @@
   background: var(--white);
   border-radius: 20px;
   box-shadow: 0 10px 40px rgba(45, 90, 39, 0.1);
-  overflow: hidden;
+
   border: 1px solid var(--border-color);
 }
 
@@ -127,6 +127,7 @@
   flex: 1;
   overflow-y: auto;
   background: var(--white);
+  overflow: auto;
 }
 
 .conversations-sidebar .conversations-list .conversation-item {
@@ -367,6 +368,7 @@
   display: flex;
   flex-direction: column;
   background: var(--white);
+  overflow: auto;
 }
 
 .messages-main .messages-header {

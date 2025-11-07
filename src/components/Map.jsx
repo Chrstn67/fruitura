@@ -64,26 +64,50 @@ const Map = ({ listings = [] }) => {
       if (listing.latitude && listing.longitude) {
         const marker = L.marker([listing.latitude, listing.longitude])
           .bindPopup(`
-            <div>
+            <div class="map-popup">
               <h3>${listing.title}</h3>
-              <p>${listing.fruit_type}</p>
-              <p>${listing.is_free ? "Gratuit" : `${listing.price}€`}</p>
-              <a href="/listing/${listing.id}">Voir l'annonce</a>
+              <p><strong>Type:</strong> ${listing.fruit_type}</p>
+              <p><strong>Prix:</strong> ${
+                listing.is_free ? "🆓 Gratuit" : `💰 ${listing.price}€`
+              }</p>
+              
+              <div class="popup-actions">
+                <a href="#/listing/${
+                  listing.id
+                }" class="popup-link" onclick="window.location.href='${
+          window.location.origin
+        }/listing/${listing.id}'">Voir l'annonce</a>
+              </div>
             </div>
           `);
 
         marker.addTo(mapInstance.current);
+
+        // Ajouter un événement de clic pour gérer la navigation
+        marker.on("popupopen", () => {
+          // Attendre que le popup soit complètement rendu
+          setTimeout(() => {
+            const link = document.querySelector(".popup-link");
+            if (link) {
+              link.addEventListener("click", (e) => {
+                e.preventDefault();
+                window.location.href = `${window.location.origin}/listing/${listing.id}`;
+              });
+            }
+          }, 100);
+        });
       }
     });
 
     // Ajuster la vue si nécessaire
     if (listings.length > 0) {
-      const group = new L.featureGroup(
-        listings
-          .filter((l) => l.latitude && l.longitude)
-          .map((l) => L.marker([l.latitude, l.longitude]))
-      );
-      mapInstance.current.fitBounds(group.getBounds().pad(0.1));
+      const validListings = listings.filter((l) => l.latitude && l.longitude);
+      if (validListings.length > 0) {
+        const group = new L.featureGroup(
+          validListings.map((l) => L.marker([l.latitude, l.longitude]))
+        );
+        mapInstance.current.fitBounds(group.getBounds().pad(0.1));
+      }
     }
   }, [listings, isLoaded]);
 
