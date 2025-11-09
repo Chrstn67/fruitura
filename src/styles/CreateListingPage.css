@@ -69,10 +69,6 @@
         margin-bottom: 0.5rem;
         font-weight: 500;
         color: var(--text-color);
-
-        &[for] {
-          cursor: pointer;
-        }
       }
 
       input,
@@ -90,12 +86,6 @@
           outline: none;
           border-color: var(--primary-color);
           box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
-        }
-
-        &:disabled {
-          background-color: var(--background-color);
-          cursor: not-allowed;
-          opacity: 0.6;
         }
       }
 
@@ -117,6 +107,190 @@
         color: var(--text-light);
         margin-top: 0.25rem;
         font-style: italic;
+      }
+    }
+
+    /* Styles corrigés pour la recherche de fruits/légumes */
+    .fruit-search-group {
+      .search-container {
+        position: relative;
+      }
+
+      .search-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: var(--white);
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius);
+        transition: var(--transition);
+        overflow: hidden;
+
+        &:focus-within {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .search-icon-wrapper {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0 1rem;
+          color: var(--text-light);
+          background: var(--background-color);
+          border-right: 1px solid var(--border-color);
+          height: 100%;
+          min-width: 50px;
+
+          .search-icon {
+            font-size: 1.1rem;
+          }
+        }
+
+        .search-input {
+          flex: 1;
+          border: none;
+          padding: 0.75rem 1rem;
+          font-size: 1rem;
+          background: transparent;
+          outline: none;
+
+          &::placeholder {
+            color: var(--text-light);
+          }
+        }
+      }
+
+      .fruit-dropdown {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--white);
+        border: 2px solid var(--primary-color);
+        border-top: none;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        box-shadow: var(--shadow-hover);
+        z-index: 1001;
+        max-height: 400px;
+        overflow-y: auto;
+        animation: slideDown 0.2s ease-out;
+
+        .dropdown-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1rem 1.25rem;
+          background: linear-gradient(
+            135deg,
+            var(--primary-light),
+            var(--primary-color)
+          );
+          color: var(--white);
+          border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+
+          .dropdown-title {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+
+            .results-count {
+              font-weight: 600;
+              font-size: 0.95rem;
+            }
+
+            .total-count {
+              font-size: 0.8rem;
+              opacity: 0.9;
+            }
+          }
+
+          .close-dropdown {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--white);
+            font-size: 1rem;
+            transition: var(--transition);
+
+            &:hover {
+              background: rgba(255, 255, 255, 0.3);
+              transform: scale(1.1);
+            }
+          }
+        }
+
+        .dropdown-list {
+          max-height: 350px;
+          overflow-y: auto;
+
+          .dropdown-item {
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: var(--transition);
+
+            &:last-child {
+              border-bottom: none;
+            }
+
+            &:hover {
+              background: var(--primary-light);
+              color: var(--primary-color);
+            }
+
+            &.selected {
+              background: var(--primary-color);
+              color: var(--white);
+
+              .checkmark {
+                color: var(--white);
+              }
+            }
+
+            .fruit-name {
+              font-weight: 500;
+            }
+
+            .checkmark {
+              color: var(--success-color);
+              font-weight: bold;
+              font-size: 1.1rem;
+            }
+          }
+
+          .no-results {
+            padding: 2rem 1rem;
+            text-align: center;
+            color: var(--text-light);
+
+            .no-results-icon {
+              font-size: 2rem;
+              margin-bottom: 1rem;
+              opacity: 0.5;
+            }
+
+            .no-results-text {
+              font-size: 1rem;
+              font-weight: 500;
+              margin-bottom: 0.5rem;
+            }
+
+            .no-results-help {
+              font-size: 0.85rem;
+              opacity: 0.8;
+            }
+          }
+        }
       }
     }
 
@@ -263,11 +437,6 @@
         &:hover {
           background: var(--primary-color);
         }
-
-        &:disabled {
-          background: var(--border-color);
-          cursor: not-allowed;
-        }
       }
 
       .upload-spinner {
@@ -323,22 +492,6 @@
       }
     }
 
-    .form-terms {
-      text-align: center;
-      margin: 1.5rem 0;
-      color: var(--text-light);
-      font-size: 0.9rem;
-
-      .link {
-        color: var(--primary-color);
-        text-decoration: none;
-
-        &:hover {
-          text-decoration: underline;
-        }
-      }
-    }
-
     .form-actions {
       display: flex;
       gap: 1rem;
@@ -371,6 +524,28 @@
   }
 }
 
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Overlay pour mobile */
+.dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+}
+
 /* Alert styles */
 .alert {
   padding: 1rem 1.5rem;
@@ -382,12 +557,6 @@
     background: rgba(244, 67, 54, 0.1);
     color: #d32f2f;
     border: 1px solid rgba(244, 67, 54, 0.2);
-  }
-
-  &.alert-success {
-    background: rgba(76, 175, 80, 0.1);
-    color: #2e7d32;
-    border: 1px solid rgba(76, 175, 80, 0.2);
   }
 }
 
@@ -404,10 +573,6 @@
       h1 {
         font-size: 2rem;
       }
-
-      p {
-        font-size: 1rem;
-      }
     }
 
     .listing-form {
@@ -418,12 +583,21 @@
         padding-bottom: 1.5rem;
       }
 
-      .conditions-grid {
-        grid-template-columns: 1fr;
+      .fruit-search-group {
+        .fruit-dropdown {
+          position: fixed;
+          top: 50%;
+          left: 1rem;
+          right: 1rem;
+          transform: translateY(-50%);
+          max-height: 70vh;
+          z-index: 1001;
+          border-radius: var(--border-radius);
+        }
       }
 
-      .photo-preview {
-        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      .conditions-grid {
+        grid-template-columns: 1fr;
       }
     }
   }

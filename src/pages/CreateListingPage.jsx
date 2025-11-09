@@ -29,25 +29,151 @@ const CreateListingPage = () => {
   const [addressSuggestions, setAddressSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [addressCoordinates, setAddressCoordinates] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [showFruitDropdown, setShowFruitDropdown] = useState(false);
 
-  const fruitTypes = [
-    "Pommes",
-    "Poires",
-    "Cerises",
-    "Prunes",
-    "Abricots",
-    "Pêches",
-    "Tomates",
-    "Courgettes",
-    "Concombres",
+  // Liste complète des fruits et légumes triés alphabétiquement
+  const allFruitsVegetables = [
+    "Abricot",
+    "Ail",
+    "Amande",
+    "Ananas",
+    "Anone",
+    "Artichaut",
+    "Asperge",
+    "Aubergine",
+    "Avocat",
+    "Banane",
+    "Basilic",
+    "Betterave",
+    "Blette",
+    "Brocoli",
+    "Cacao",
+    "Cacahuète",
+    "Cactus",
+    "Câpre",
+    "Carambole",
+    "Carotte",
+    "Cassis",
+    "Céleri",
+    "Cerfeuil",
+    "Cerise",
+    "Châtaigne",
+    "Chayotte",
+    "Chicorée",
+    "Chou",
+    "Chou-fleur",
+    "Chou kale",
+    "Chou-rave",
+    "Citron",
+    "Citron vert",
+    "Citrouille",
+    "Clémentine",
+    "Coing",
+    "Concombre",
+    "Coriandre",
+    "Cornichon",
+    "Courge",
+    "Courgette",
+    "Cresson",
+    "Datte",
+    "Échalote",
+    "Endive",
+    "Épinard",
+    "Fenouil",
+    "Fève",
+    "Figue",
+    "Fraise",
+    "Framboise",
+    "Fruit de la passion",
+    "Gingembre",
+    "Girofle",
+    "Goyave",
+    "Grenade",
+    "Groseille",
+    "Haricot",
+    "Haricot vert",
+    "Houx",
+    "Igname",
+    "Jacquier",
+    "Jujube",
+    "Kaki",
+    "Kiwi",
+    "Kumquat",
+    "Laitue",
+    "Lentille",
+    "Litchi",
+    "Macadamia",
+    "Mandarine",
+    "Mangue",
+    "Mangoustan",
+    "Marron",
+    "Melon",
+    "Menthe",
+    "Mirabelle",
+    "Mûre",
+    "Myrtille",
+    "Navet",
+    "Noisette",
+    "Noix",
+    "Noix de cajou",
+    "Noix de coco",
+    "Noix de pécan",
+    "Okra",
+    "Oignon",
+    "Olive",
+    "Orange",
+    "Pamplemousse",
+    "Papaye",
+    "Patate douce",
+    "Pastèque",
+    "Pêche",
+    "Persil",
+    "Petit pois",
+    "Piment",
+    "Pistache",
+    "Pitaya",
+    "Plantain",
+    "Poire",
+    "Poireau",
+    "Pois chiche",
+    "Poivron",
+    "Pomme",
+    "Pomme de terre",
+    "Potimarron",
+    "Potiron",
+    "Prune",
+    "Quetsche",
     "Radis",
-    "Carottes",
-    "Salades",
-    "Épinards",
-    "Haricots",
-    "Petits pois",
+    "Raisin",
+    "Ramboutan",
+    "Rhubarbe",
+    "Roquette",
+    "Rutabaga",
+    "Safran",
+    "Salade",
+    "Salsifis",
+    "Sarrasin",
+    "Sauge",
+    "Shiitake",
+    "Soja",
+    "Tamarin",
+    "Thym",
+    "Tomate",
+    "Topinambour",
+    "Truffe",
+    "Vanille",
+    "Verveine",
+    "Wasabi",
+    "Yuzu",
+    "Zucchini",
     "Autres",
-  ];
+  ].sort((a, b) => a.localeCompare(b, "fr"));
+
+  // Fruits et légumes filtrés selon la recherche
+  const filteredFruitsVegetables = allFruitsVegetables.filter((item) =>
+    item.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   useEffect(() => {
     if (!user) {
@@ -61,6 +187,23 @@ const CreateListingPage = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+  };
+
+  const handleFruitTypeSelect = (fruitType) => {
+    setFormData((prev) => ({ ...prev, fruitType }));
+    setSearchTerm("");
+    setShowFruitDropdown(false);
+  };
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    setShowFruitDropdown(true);
+
+    // Si l'utilisateur tape quelque chose qui n'est pas dans la liste, on le laisse taper
+    if (value && !allFruitsVegetables.includes(value)) {
+      setFormData((prev) => ({ ...prev, fruitType: value }));
+    }
   };
 
   const handleAddressSearch = async (query) => {
@@ -251,6 +394,7 @@ const CreateListingPage = () => {
             <div className="page-header">
               <h1>Publier une annonce</h1>
               <p>Partagez vos fruits et légumes avec votre communauté</p>
+              <p>Merci de générer une annonce par produit.</p>
             </div>
 
             {error && <div className="alert alert-error">{error}</div>}
@@ -276,22 +420,95 @@ const CreateListingPage = () => {
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label htmlFor="fruitType">Type de fruit/légume *</label>
-                  <select
-                    id="fruitType"
-                    name="fruitType"
-                    value={formData.fruitType}
-                    onChange={handleChange}
-                    required
-                  >
-                    <option value="">Sélectionnez un type</option>
-                    {fruitTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
+                <div className="form-group fruit-search-group">
+                  <label htmlFor="fruitSearch">Produit *</label>
+                  <div className="search-container">
+                    <div className="search-input-wrapper">
+                      <input
+                        type="text"
+                        id="fruitSearch"
+                        value={searchTerm || formData.fruitType}
+                        onChange={handleSearchChange}
+                        onFocus={() => setShowFruitDropdown(true)}
+                        placeholder="Recherchez ou tapez un fruit/légume..."
+                        required
+                        className="search-input"
+                      />
+                      <button
+                        type="button"
+                        className="search-button"
+                        onClick={() => setShowFruitDropdown(!showFruitDropdown)}
+                      >
+                        {/* <span className="search-icon">🔍</span> */}
+                      </button>
+                    </div>
+
+                    {showFruitDropdown && (
+                      <>
+                        <div
+                          className="dropdown-overlay"
+                          onClick={() => setShowFruitDropdown(false)}
+                        />
+                        <div className="fruit-dropdown">
+                          <div className="dropdown-header">
+                            <div className="dropdown-title">
+                              <span className="results-count">
+                                {filteredFruitsVegetables.length} résultat
+                                {filteredFruitsVegetables.length !== 1
+                                  ? "s"
+                                  : ""}
+                              </span>
+                              <span className="total-count">
+                                sur {allFruitsVegetables.length} variétés
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              className="close-dropdown"
+                              onClick={() => setShowFruitDropdown(false)}
+                            >
+                              ✕
+                            </button>
+                          </div>
+                          <div className="dropdown-list">
+                            {filteredFruitsVegetables.length > 0 ? (
+                              filteredFruitsVegetables.map((fruit) => (
+                                <div
+                                  key={fruit}
+                                  className={`dropdown-item ${
+                                    formData.fruitType === fruit
+                                      ? "selected"
+                                      : ""
+                                  }`}
+                                  onClick={() => handleFruitTypeSelect(fruit)}
+                                >
+                                  <span className="fruit-name">{fruit}</span>
+                                  {formData.fruitType === fruit && (
+                                    <span className="checkmark">✓</span>
+                                  )}
+                                </div>
+                              ))
+                            ) : (
+                              <div className="no-results">
+                                <div className="no-results-icon">🔍</div>
+                                <div className="no-results-text">
+                                  Aucun résultat trouvé pour "{searchTerm}"
+                                </div>
+                                <div className="no-results-help">
+                                  Vous pouvez taper votre propre type de fruit
+                                  ou légume
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="input-help">
+                    Commencez à taper pour rechercher parmi{" "}
+                    {allFruitsVegetables.length} variétés
+                  </div>
                 </div>
 
                 <div className="form-group">
