@@ -58,13 +58,13 @@ const HomePage = () => {
         favoritesData = favorites?.map((f) => f.listing_id) || [];
       }
 
-      // Récupérer les notes moyennes
-      const listingsWithExtras = await Promise.all(
+      // Récupérer les notes moyennes pour chaque annonce
+      const listingsWithRatings = await Promise.all(
         data.map(async (listing) => {
           const { data: ratings } = await supabase
             .from("ratings_2025_10_29_18_05")
             .select("rating")
-            .eq("giver_id", listing.user_id);
+            .eq("listing_id", listing.id);
 
           const averageRating =
             ratings?.length > 0
@@ -80,7 +80,7 @@ const HomePage = () => {
         })
       );
 
-      setListings(listingsWithExtras);
+      setListings(listingsWithRatings);
     } catch (error) {
       console.error("Error fetching listings:", error);
     } finally {
@@ -252,6 +252,12 @@ const HomePage = () => {
                   {new Set(listings.map((l) => l.fruit_type)).size}
                 </div>
                 <div className="stat-label">Types de fruits/légumes</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-number">
+                  {listings.filter((l) => l.average_rating > 0).length}
+                </div>
+                <div className="stat-label">Annonces notées</div>
               </div>
             </div>
           </div>

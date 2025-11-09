@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../integrations/supabase/client.js";
 import { useAuth } from "../components/App.jsx";
-import Rating from "./RatingSystem.jsx";
 import "../styles/ListingCard.css";
 
 const ListingCard = ({ listing, onFavoriteToggle }) => {
@@ -58,6 +57,28 @@ const ListingCard = ({ listing, onFavoriteToggle }) => {
     return new Date(dateString).toLocaleDateString("fr-FR");
   };
 
+  const renderStars = (rating, showValue = false) => {
+    if (!rating || rating === 0) return null;
+
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
+    return (
+      <div className="rating-badge">
+        <div className="stars">
+          {"★".repeat(fullStars)}
+          {hasHalfStar && "⭐"}
+          {"☆".repeat(emptyStars)}
+        </div>
+        {showValue && <span className="rating-value">{rating.toFixed(1)}</span>}
+        {listing.rating_count > 0 && (
+          <span className="rating-count">{listing.rating_count}</span>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="listing-card">
       <Link to={`/listing/${listing.id}`} className="listing-link">
@@ -70,23 +91,36 @@ const ListingCard = ({ listing, onFavoriteToggle }) => {
             </div>
           )}
 
-          {user && (
-            <button
-              className={`favorite-btn ${isFavorite ? "active" : ""}`}
-              onClick={handleFavoriteToggle}
-              disabled={loading}
-            >
-              {isFavorite ? "❤️" : "🤍"}
-            </button>
-          )}
+          {/* Overlay avec informations */}
+          <div className="image-overlay">
+            {/* Badge de prix */}
+            <div className="price-badge">
+              {formatPrice(listing.price, listing.is_free)}
+            </div>
+
+            {/* Badge de notation */}
+            {listing.average_rating > 0 && (
+              <div className="rating-overlay">
+                {renderStars(listing.average_rating, true)}
+              </div>
+            )}
+
+            {/* Bouton favori */}
+            {user && (
+              <button
+                className={`favorite-btn ${isFavorite ? "active" : ""}`}
+                onClick={handleFavoriteToggle}
+                disabled={loading}
+              >
+                {isFavorite ? "❤️" : "🤍"}
+              </button>
+            )}
+          </div>
         </div>
 
         <div className="listing-content">
           <div className="listing-header">
             <h3 className="listing-title">{listing.title}</h3>
-            <div className="listing-price">
-              {formatPrice(listing.price, listing.is_free)}
-            </div>
           </div>
 
           <div className="listing-details">
@@ -125,15 +159,6 @@ const ListingCard = ({ listing, onFavoriteToggle }) => {
               <span className="feature">👤 Présence requise</span>
             )}
           </div>
-
-          {listing.average_rating && (
-            <div className="listing-rating">
-              <Rating value={listing.average_rating} readonly />
-              <span className="rating-count">
-                ({listing.rating_count} avis)
-              </span>
-            </div>
-          )}
         </div>
       </Link>
     </div>

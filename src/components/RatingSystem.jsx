@@ -24,12 +24,6 @@ const RatingSystem = ({ listingId, giverId, onRatingSubmitted }) => {
     if (!user) return;
 
     try {
-      console.log("🔍 Checking existing rating for:", {
-        listingId,
-        giverId,
-        userId: user.id,
-      });
-
       const { data, error } = await supabase
         .from("ratings_2025_10_29_18_05")
         .select("*")
@@ -44,12 +38,10 @@ const RatingSystem = ({ listingId, giverId, onRatingSubmitted }) => {
       }
 
       if (data) {
-        console.log("✅ Found existing rating:", data);
         setExistingRating(data);
         setRating(data.rating);
         setComment(data.comment || "");
       } else {
-        console.log("ℹ️ No existing rating found");
         setExistingRating(null);
         setRating(0);
         setComment("");
@@ -61,8 +53,6 @@ const RatingSystem = ({ listingId, giverId, onRatingSubmitted }) => {
 
   const fetchAverageRating = async () => {
     try {
-      console.log("📊 Fetching average rating for giver:", giverId);
-
       const { data, error } = await supabase
         .from("ratings_2025_10_29_18_05")
         .select("rating")
@@ -78,9 +68,6 @@ const RatingSystem = ({ listingId, giverId, onRatingSubmitted }) => {
         const average = total / data.length;
         setAverageRating(average);
         setTotalRatings(data.length);
-        console.log(
-          `📊 Average rating: ${average.toFixed(1)} (${data.length} avis)`
-        );
       } else {
         setAverageRating(0);
         setTotalRatings(0);
@@ -93,7 +80,6 @@ const RatingSystem = ({ listingId, giverId, onRatingSubmitted }) => {
   const handleSubmitRating = async (e) => {
     e.preventDefault();
 
-    // Validation améliorée
     if (!rating || rating < 1 || rating > 5) {
       alert("Veuillez sélectionner une note entre 1 et 5 étoiles");
       return;
@@ -121,11 +107,8 @@ const RatingSystem = ({ listingId, giverId, onRatingSubmitted }) => {
         updated_at: new Date().toISOString(),
       };
 
-      console.log("📝 Submitting rating with data:", ratingData);
-
       let result;
       if (existingRating) {
-        // Mettre à jour l'évaluation existante
         result = await supabase
           .from("ratings_2025_10_29_18_05")
           .update({
@@ -135,18 +118,12 @@ const RatingSystem = ({ listingId, giverId, onRatingSubmitted }) => {
           })
           .eq("id", existingRating.id);
       } else {
-        // Créer une nouvelle évaluation
         result = await supabase
           .from("ratings_2025_10_29_18_05")
           .insert(ratingData);
       }
 
-      if (result.error) {
-        console.error("❌ Supabase error:", result.error);
-        throw result.error;
-      }
-
-      console.log("✅ Rating submitted successfully");
+      if (result.error) throw result.error;
 
       alert(
         existingRating
@@ -155,7 +132,6 @@ const RatingSystem = ({ listingId, giverId, onRatingSubmitted }) => {
       );
 
       setShowForm(false);
-      // Recharger les données
       await checkExistingRating();
       await fetchAverageRating();
 
@@ -222,14 +198,12 @@ const RatingSystem = ({ listingId, giverId, onRatingSubmitted }) => {
     );
   };
 
-  // Ne pas afficher si l'utilisateur évalue sa propre annonce
   if (!user || user.id === giverId) {
     return null;
   }
 
   return (
     <div className="rating-system">
-      {/* Affichage de la note moyenne */}
       {totalRatings > 0 && (
         <div className="average-rating-section">
           <h4>Note moyenne du propriétaire</h4>
@@ -237,7 +211,6 @@ const RatingSystem = ({ listingId, giverId, onRatingSubmitted }) => {
         </div>
       )}
 
-      {/* Système d'évaluation personnel */}
       {existingRating ? (
         <div className="existing-rating">
           <div className="rating-header">

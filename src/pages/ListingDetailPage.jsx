@@ -113,7 +113,6 @@ const ListingDetailPage = () => {
   };
 
   const handleRatingSubmitted = () => {
-    // Recharger les avis après soumission
     fetchRatings();
     fetchOwnerAverageRating();
   };
@@ -126,7 +125,6 @@ const ListingDetailPage = () => {
     }
 
     try {
-      // Créer une réservation
       const { error: reservationError } = await supabase
         .from("reservations_2025_10_29_18_05")
         .insert({
@@ -139,7 +137,6 @@ const ListingDetailPage = () => {
 
       if (reservationError) throw reservationError;
 
-      // Envoyer un message privé
       const { error: messageError } = await supabase
         .from("messages_2025_10_29_18_05")
         .insert({
@@ -174,12 +171,19 @@ const ListingDetailPage = () => {
     return `${price}€`;
   };
 
-  const renderStars = (rating, showValue = false) => {
+  const renderStars = (rating, showValue = false, size = "medium") => {
+    if (!rating || rating === 0) return null;
+
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+
     return (
       <div className="stars-display">
-        <div className="stars">
-          {"★".repeat(Math.round(rating))}
-          {"☆".repeat(5 - Math.round(rating))}
+        <div className={`stars ${size}`}>
+          {"★".repeat(fullStars)}
+          {hasHalfStar && "⭐"}
+          {"☆".repeat(emptyStars)}
         </div>
         {showValue && (
           <span className="rating-value">({rating.toFixed(1)})</span>
@@ -291,19 +295,6 @@ const ListingDetailPage = () => {
                 </div>
               </div>
 
-              {/* Affichage de la note moyenne de l'annonce */}
-              {ownerTotalRatings > 0 && (
-                <div className="listing-rating-overview">
-                  <div className="rating-summary">
-                    {renderStars(ownerAverageRating, true)}
-                    <span className="ratings-count">
-                      {ownerTotalRatings}{" "}
-                      {ownerTotalRatings > 1 ? "avis" : "avis"}
-                    </span>
-                  </div>
-                </div>
-              )}
-
               <div className="listing-meta">
                 <div className="meta-item">
                   <span className="icon">🍓</span>
@@ -395,10 +386,10 @@ const ListingDetailPage = () => {
                     </h4>
                     {ownerTotalRatings > 0 && (
                       <div className="owner-rating">
-                        {renderStars(ownerAverageRating)}
+                        {renderStars(ownerAverageRating, true, "small")}
                         <span className="rating-count">
-                          ({ownerTotalRatings}{" "}
-                          {ownerTotalRatings > 1 ? "avis" : "avis"})
+                          {ownerTotalRatings}{" "}
+                          {ownerTotalRatings > 1 ? "avis" : "avis"}
                         </span>
                       </div>
                     )}
@@ -439,11 +430,6 @@ const ListingDetailPage = () => {
             <div className="ratings-section">
               <div className="ratings-header">
                 <h2>Avis des utilisateurs ({ratings.length})</h2>
-                {ownerTotalRatings > 0 && (
-                  <div className="overall-rating">
-                    {renderStars(ownerAverageRating, true)}
-                  </div>
-                )}
               </div>
               <div className="ratings-list">
                 {ratings.map((rating) => (
@@ -466,8 +452,7 @@ const ListingDetailPage = () => {
                               "Utilisateur"}
                           </h4>
                           <div className="rating-stars">
-                            {"★".repeat(rating.rating)}
-                            {"☆".repeat(5 - rating.rating)}
+                            {renderStars(rating.rating, false, "small")}
                             <span className="individual-rating">
                               ({rating.rating}/5)
                             </span>
