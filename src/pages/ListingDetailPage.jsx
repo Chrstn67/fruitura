@@ -4,7 +4,7 @@ import { supabase } from "../integrations/supabase/client.js";
 import { useAuth } from "../components/App.jsx";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
-import Rating from "../components/RatingSystem.jsx";
+import RatingSystem from "../components/RatingSystem.jsx";
 import "../styles/ListingDetailPage.css";
 
 const ListingDetailPage = () => {
@@ -15,18 +15,23 @@ const ListingDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showContactForm, setShowContactForm] = useState(false);
-  const [showRatingForm, setShowRatingForm] = useState(false);
   const [ratings, setRatings] = useState([]);
   const [contactMessage, setContactMessage] = useState("");
   const [reservationDate, setReservationDate] = useState("");
-  const [newRating, setNewRating] = useState(0);
-  const [ratingComment, setRatingComment] = useState("");
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
+  const [ownerAverageRating, setOwnerAverageRating] = useState(0);
+  const [ownerTotalRatings, setOwnerTotalRatings] = useState(0);
 
   useEffect(() => {
     fetchListing();
-    fetchRatings();
   }, [id]);
+
+  useEffect(() => {
+    if (listing) {
+      fetchRatings();
+      fetchOwnerAverageRating();
+    }
+  }, [listing]);
 
   const fetchListing = async () => {
     try {
@@ -58,6 +63,8 @@ const ListingDetailPage = () => {
   };
 
   const fetchRatings = async () => {
+    if (!listing) return;
+
     try {
       const { data, error } = await supabase
         .from("ratings_2025_10_29_18_05")
@@ -70,7 +77,7 @@ const ListingDetailPage = () => {
           )
         `
         )
-        .eq("listing_id", id)
+        .eq("giver_id", listing.user_id)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -78,6 +85,37 @@ const ListingDetailPage = () => {
     } catch (error) {
       console.error("Error fetching ratings:", error);
     }
+  };
+
+  const fetchOwnerAverageRating = async () => {
+    if (!listing) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("ratings_2025_10_29_18_05")
+        .select("rating")
+        .eq("giver_id", listing.user_id);
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const total = data.reduce((sum, item) => sum + item.rating, 0);
+        const average = total / data.length;
+        setOwnerAverageRating(average);
+        setOwnerTotalRatings(data.length);
+      } else {
+        setOwnerAverageRating(0);
+        setOwnerTotalRatings(0);
+      }
+    } catch (error) {
+      console.error("Error fetching owner average rating:", error);
+    }
+  };
+
+  const handleRatingSubmitted = () => {
+    // Recharger les avis après soumission
+    fetchRatings();
+    fetchOwnerAverageRating();
   };
 
   const handleContactSubmit = async (e) => {
@@ -96,6 +134,7 @@ const ListingDetailPage = () => {
           user_id: user.id,
           scheduled_date: reservationDate,
           message: contactMessage,
+          status: "pending",
         });
 
       if (reservationError) throw reservationError;
@@ -122,32 +161,6 @@ const ListingDetailPage = () => {
     }
   };
 
-  const handleRatingSubmit = async (e) => {
-    e.preventDefault();
-    if (!user || !newRating) return;
-
-    try {
-      const { error } = await supabase.from("ratings_2025_10_29_18_05").insert({
-        listing_id: id,
-        giver_id: listing.user_id,
-        receiver_id: user.id,
-        rating: newRating,
-        comment: ratingComment,
-      });
-
-      if (error) throw error;
-
-      setShowRatingForm(false);
-      setNewRating(0);
-      setRatingComment("");
-      fetchRatings();
-      alert("Votre évaluation a été ajoutée !");
-    } catch (error) {
-      console.error("Error submitting rating:", error);
-      alert("Erreur lors de l'ajout de votre évaluation");
-    }
-  };
-
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString("fr-FR", {
       year: "numeric",
@@ -161,10 +174,19 @@ const ListingDetailPage = () => {
     return `${price}€`;
   };
 
-  const averageRating =
-    ratings.length > 0
-      ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
-      : 0;
+  const renderStars = (rating, showValue = false) => {
+    return (
+      <div className="stars-display">
+        <div className="stars">
+          {"★".repeat(Math.round(rating))}
+          {"☆".repeat(5 - Math.round(rating))}
+        </div>
+        {showValue && (
+          <span className="rating-value">({rating.toFixed(1)})</span>
+        )}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -269,6 +291,19 @@ const ListingDetailPage = () => {
                 </div>
               </div>
 
+              {/* Affichage de la note moyenne de l'annonce */}
+              {ownerTotalRatings > 0 && (
+                <div className="listing-rating-overview">
+                  <div className="rating-summary">
+                    {renderStars(ownerAverageRating, true)}
+                    <span className="ratings-count">
+                      {ownerTotalRatings}{" "}
+                      {ownerTotalRatings > 1 ? "avis" : "avis"}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div className="listing-meta">
                 <div className="meta-item">
                   <span className="icon">🍓</span>
@@ -358,15 +393,34 @@ const ListingDetailPage = () => {
                       {listing.profiles_2025_10_29_18_05?.full_name ||
                         "Utilisateur"}
                     </h4>
-                    {averageRating > 0 && (
+                    {ownerTotalRatings > 0 && (
                       <div className="owner-rating">
-                        <Rating value={averageRating} readonly size="small" />
-                        <span>({ratings.length} avis)</span>
+                        {renderStars(ownerAverageRating)}
+                        <span className="rating-count">
+                          ({ownerTotalRatings}{" "}
+                          {ownerTotalRatings > 1 ? "avis" : "avis"})
+                        </span>
+                      </div>
+                    )}
+                    {ownerTotalRatings === 0 && (
+                      <div className="no-ratings">
+                        <span>Aucun avis pour le moment</span>
                       </div>
                     )}
                   </div>
                 </div>
               </div>
+
+              {/* Système d'évaluation */}
+              {user && user.id !== listing.user_id && (
+                <div className="rating-section">
+                  <RatingSystem
+                    listingId={listing.id}
+                    giverId={listing.user_id}
+                    onRatingSubmitted={handleRatingSubmitted}
+                  />
+                </div>
+              )}
 
               {user && user.id !== listing.user_id && (
                 <div className="action-buttons">
@@ -376,12 +430,6 @@ const ListingDetailPage = () => {
                   >
                     Contacter le propriétaire
                   </button>
-                  <button
-                    className="btn btn-outline btn-lg"
-                    onClick={() => setShowRatingForm(true)}
-                  >
-                    Laisser un avis
-                  </button>
                 </div>
               )}
             </div>
@@ -389,7 +437,14 @@ const ListingDetailPage = () => {
 
           {ratings.length > 0 && (
             <div className="ratings-section">
-              <h2>Avis ({ratings.length})</h2>
+              <div className="ratings-header">
+                <h2>Avis des utilisateurs ({ratings.length})</h2>
+                {ownerTotalRatings > 0 && (
+                  <div className="overall-rating">
+                    {renderStars(ownerAverageRating, true)}
+                  </div>
+                )}
+              </div>
               <div className="ratings-list">
                 {ratings.map((rating) => (
                   <div key={rating.id} className="rating-item">
@@ -411,11 +466,11 @@ const ListingDetailPage = () => {
                               "Utilisateur"}
                           </h4>
                           <div className="rating-stars">
-                            <Rating
-                              value={rating.rating}
-                              readonly
-                              size="small"
-                            />
+                            {"★".repeat(rating.rating)}
+                            {"☆".repeat(5 - rating.rating)}
+                            <span className="individual-rating">
+                              ({rating.rating}/5)
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -424,7 +479,7 @@ const ListingDetailPage = () => {
                       </div>
                     </div>
                     {rating.comment && (
-                      <p className="rating-comment">{rating.comment}</p>
+                      <p className="rating-comment">"{rating.comment}"</p>
                     )}
                   </div>
                 ))}
@@ -479,63 +534,6 @@ const ListingDetailPage = () => {
                   </button>
                   <button type="submit" className="btn btn-primary">
                     Envoyer
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Modal d'évaluation */}
-        {showRatingForm && (
-          <div
-            className="modal-overlay"
-            onClick={() => setShowRatingForm(false)}
-          >
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3>Laisser un avis</h3>
-                <button
-                  className="modal-close"
-                  onClick={() => setShowRatingForm(false)}
-                >
-                  ✕
-                </button>
-              </div>
-              <form onSubmit={handleRatingSubmit}>
-                <div className="form-group">
-                  <label>Note</label>
-                  <div className="rating-input">
-                    <Rating
-                      value={newRating}
-                      onChange={setNewRating}
-                      size="large"
-                    />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label>Commentaire (optionnel)</label>
-                  <textarea
-                    value={ratingComment}
-                    onChange={(e) => setRatingComment(e.target.value)}
-                    rows="4"
-                    placeholder="Partagez votre expérience..."
-                  />
-                </div>
-                <div className="modal-actions">
-                  <button
-                    type="button"
-                    className="btn btn-outline"
-                    onClick={() => setShowRatingForm(false)}
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={!newRating}
-                  >
-                    Publier l'avis
                   </button>
                 </div>
               </form>
