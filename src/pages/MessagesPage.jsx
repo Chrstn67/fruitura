@@ -37,6 +37,7 @@ const MessagesPage = () => {
         selectedConversation.otherUserId,
         selectedConversation.listingId
       );
+      window.dispatchEvent(new CustomEvent("messagesRead"));
     }
   }, [selectedConversation]);
 

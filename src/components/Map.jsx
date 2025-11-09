@@ -1,5 +1,6 @@
 // components/Map.jsx - Version Leaflet vanilla
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "../styles/Map.css";
@@ -19,6 +20,7 @@ const Map = ({ listings = [] }) => {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -72,11 +74,9 @@ const Map = ({ listings = [] }) => {
               }</p>
               
               <div class="popup-actions">
-                <a href="#/listing/${
+                <button class="popup-link" data-listing-id="${
                   listing.id
-                }" class="popup-link" onclick="window.location.href='${
-          window.location.origin
-        }/listing/${listing.id}'">Voir l'annonce</a>
+                }">Voir l'annonce</button>
               </div>
             </div>
           `);
@@ -87,11 +87,13 @@ const Map = ({ listings = [] }) => {
         marker.on("popupopen", () => {
           // Attendre que le popup soit complètement rendu
           setTimeout(() => {
-            const link = document.querySelector(".popup-link");
+            const link = document.querySelector(
+              `[data-listing-id="${listing.id}"]`
+            );
             if (link) {
               link.addEventListener("click", (e) => {
                 e.preventDefault();
-                window.location.href = `${window.location.origin}/listing/${listing.id}`;
+                navigate(`/listing/${listing.id}`);
               });
             }
           }, 100);
@@ -109,7 +111,7 @@ const Map = ({ listings = [] }) => {
         mapInstance.current.fitBounds(group.getBounds().pad(0.1));
       }
     }
-  }, [listings, isLoaded]);
+  }, [listings, isLoaded, navigate]);
 
   return (
     <div className="map-container">

@@ -52,11 +52,8 @@ function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("🔐 Initialisation de l'authentification...");
-
     // Récupérer la session initiale
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("📦 Session récupérée:", session);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -66,7 +63,6 @@ function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log("🔄 Changement d'authentification:", event, session);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -77,7 +73,6 @@ function App() {
 
   const signUp = async (email, password, userData = {}) => {
     try {
-      console.log("📝 Tentative d'inscription pour:", email);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -88,59 +83,44 @@ function App() {
       });
 
       if (error) throw error;
-      console.log("✅ Inscription réussie");
       return { data, error: null };
     } catch (error) {
-      console.error("❌ Erreur d'inscription:", error);
       return { data: null, error };
     }
   };
 
   const signIn = async (email, password) => {
     try {
-      console.log("🔑 Tentative de connexion pour:", email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
-      console.log("✅ Connexion réussie");
       return { data, error: null };
     } catch (error) {
-      console.error("❌ Erreur de connexion:", error);
       return { data: null, error };
     }
   };
 
   const signOut = async () => {
     try {
-      console.log("🚪 Tentative de déconnexion...");
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
-
-      // FORCER le rafraîchissement de l'état utilisateur
-      setUser(null);
-      setSession(null);
-      console.log("✅ Déconnexion réussie");
     } catch (error) {
-      console.error("❌ Erreur de déconnexion:", error);
-      throw error;
+      console.error("Error signing out:", error);
     }
   };
 
   const resetPassword = async (email) => {
     try {
-      console.log("🔐 Réinitialisation mot de passe pour:", email);
       const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) throw error;
-      console.log("✅ Email de réinitialisation envoyé");
       return { data, error: null };
     } catch (error) {
-      console.error("❌ Erreur réinitialisation:", error);
       return { data: null, error };
     }
   };
