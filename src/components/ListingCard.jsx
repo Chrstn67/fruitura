@@ -73,7 +73,7 @@ const ListingCard = ({ listing, onFavoriteToggle }) => {
         </div>
         {showValue && <span className="rating-value">{rating.toFixed(1)}</span>}
         {listing.rating_count > 0 && (
-          <span className="rating-count">{listing.rating_count}</span>
+          <span className="rating-count">({listing.rating_count})</span>
         )}
       </div>
     );
@@ -91,22 +91,18 @@ const ListingCard = ({ listing, onFavoriteToggle }) => {
             </div>
           )}
 
-          {/* Overlay avec informations */}
           <div className="image-overlay">
-            {/* Badge de prix */}
             <div className="price-badge">
               {formatPrice(listing.price, listing.is_free)}
             </div>
 
-            {/* Badge de notation */}
             {listing.average_rating > 0 && (
               <div className="rating-overlay">
                 {renderStars(listing.average_rating, true)}
               </div>
             )}
 
-            {/* Bouton favori */}
-            {user && (
+            {user && user.id !== listing.user_id && (
               <button
                 className={`favorite-btn ${isFavorite ? "active" : ""}`}
                 onClick={handleFavoriteToggle}
@@ -121,6 +117,9 @@ const ListingCard = ({ listing, onFavoriteToggle }) => {
         <div className="listing-content">
           <div className="listing-header">
             <h3 className="listing-title">{listing.title}</h3>
+            {!listing.is_active && (
+              <div className="status-badge inactive">⏸️ Inactive</div>
+            )}
           </div>
 
           <div className="listing-details">

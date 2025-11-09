@@ -4,7 +4,6 @@ import { supabase } from "../integrations/supabase/client.js";
 import { useAuth } from "../components/App.jsx";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
-import ListingCard from "../components/ListingCard.jsx";
 import "../styles/ProfilePage.css";
 
 const ProfileListingsPage = () => {
@@ -44,7 +43,8 @@ const ProfileListingsPage = () => {
       const { error } = await supabase
         .from("listings_2025_10_29_18_05")
         .update({ is_active: isActive })
-        .eq("id", listingId);
+        .eq("id", listingId)
+        .eq("user_id", user.id);
 
       if (error) throw error;
 
@@ -55,13 +55,20 @@ const ProfileListingsPage = () => {
             : listing
         )
       );
+
+      alert(`Annonce ${isActive ? "activée" : "désactivée"} avec succès`);
     } catch (error) {
       console.error("Error toggling listing:", error);
+      alert("Erreur lors de la modification de l'annonce");
     }
   };
 
   const handleListingDelete = async (listingId) => {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cette annonce ?")) {
+    if (
+      !confirm(
+        "Êtes-vous sûr de vouloir supprimer cette annonce ? Cette action est irréversible."
+      )
+    ) {
       return;
     }
 
@@ -69,7 +76,8 @@ const ProfileListingsPage = () => {
       const { error } = await supabase
         .from("listings_2025_10_29_18_05")
         .delete()
-        .eq("id", listingId);
+        .eq("id", listingId)
+        .eq("user_id", user.id);
 
       if (error) throw error;
 
@@ -79,7 +87,7 @@ const ProfileListingsPage = () => {
       alert("Annonce supprimée avec succès");
     } catch (error) {
       console.error("Error deleting listing:", error);
-      alert("Erreur lors de la suppression");
+      alert("Erreur lors de la suppression de l'annonce");
     }
   };
 
@@ -87,10 +95,22 @@ const ProfileListingsPage = () => {
     navigate(`/edit-listing/${listingId}`);
   };
 
-  // Même méthode de déconnexion que dans Header
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const formatPrice = (price, isFree) => {
+    if (isFree) return "Gratuit";
+    return `${price}€`;
   };
 
   if (loading) {
@@ -158,11 +178,75 @@ const ProfileListingsPage = () => {
 
           <div className="profile-content">
             {userListings.length > 0 ? (
-              <div className="listings-grid-container">
+              <div className="listings-management">
                 <div className="listings-grid">
                   {userListings.map((listing) => (
-                    <div key={listing.id} className="listing-item-wrapper">
-                      <ListingCard listing={listing} />
+                    <div key={listing.id} className="listing-management-card">
+                      <div className="listing-header">
+                        <div className="listing-image">
+                          {listing.photos && listing.photos.length > 0 ? (
+                            <img src={listing.photos[0]} alt={listing.title} />
+                          ) : (
+                            <div className="no-image">
+                              <span>🍎</span>
+                            </div>
+                          )}
+                          <div className="listing-status">
+                            <span
+                              className={`status-badge ${
+                                listing.is_active ? "active" : "inactive"
+                              }`}
+                            >
+                              {listing.is_active ? "🟢 Active" : "⏸️ Inactive"}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="listing-info">
+                          <h3>{listing.title}</h3>
+                          <div className="listing-meta">
+                            <span className="fruit-type">
+                              🍓 {listing.fruit_type}
+                            </span>
+                            <span className="price">
+                              {formatPrice(listing.price, listing.is_free)}
+                            </span>
+                            <span className="date">
+                              📅 {formatDate(listing.created_at)}
+                            </span>
+                            <span className="address">
+                              📍 {listing.address}
+                            </span>
+                          </div>
+
+                          {listing.description && (
+                            <p className="listing-description">
+                              {listing.description.length > 150
+                                ? `${listing.description.substring(0, 150)}...`
+                                : listing.description}
+                            </p>
+                          )}
+
+                          <div className="listing-features">
+                            {listing.can_pick_from_tree && (
+                              <span className="feature">
+                                🌳 Cueillette sur arbre
+                              </span>
+                            )}
+                            {listing.can_pick_from_ground && (
+                              <span className="feature">
+                                🍂 Ramassage au sol
+                              </span>
+                            )}
+                            {listing.owner_presence_required && (
+                              <span className="feature">
+                                👤 Présence requise
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="listing-actions">
                         <button
                           className="btn btn-sm btn-edit"
