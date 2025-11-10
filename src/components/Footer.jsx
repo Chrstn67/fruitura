@@ -64,6 +64,10 @@ const Footer = () => {
 
         <div className="footer-bottom">
           <p>&copy; {currentYear} Fruitura. Tous droits réservés.</p>
+          <p>
+            Site créé par Christian HUMBERT. <br /> Technologies utilisées :
+            ViteJS, Supabase. Avec l'aide de l'IA SkyWork.
+          </p>
           <img src="/Logo.jpg" className="logo-icon" alt="Logo" />
         </div>
       </div>
