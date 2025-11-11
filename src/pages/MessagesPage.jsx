@@ -18,6 +18,7 @@ const MessagesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showConversations, setShowConversations] = useState(false);
   const messagesEndRef = useRef(null);
+  const messagesContentRef = useRef(null);
 
   useEffect(() => {
     if (!user) {
@@ -46,7 +47,10 @@ const MessagesPage = () => {
   }, [messages]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesContentRef.current) {
+      messagesContentRef.current.scrollTop =
+        messagesContentRef.current.scrollHeight;
+    }
   };
 
   const fetchConversations = async () => {
@@ -451,7 +455,7 @@ const MessagesPage = () => {
                     </div>
                   </div>
 
-                  <div className="messages-content">
+                  <div className="messages-content" ref={messagesContentRef}>
                     {messages.length > 0 ? (
                       <>
                         {messages.map((message) => (
