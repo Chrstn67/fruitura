@@ -4,13 +4,6 @@ import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
 import "../styles/ContactPage.css";
 
-// Remplacez ces valeurs par vos identifiants EmailJS
-const EMAILJS_CONFIG = {
-  SERVICE_ID: import.meta.env.VITE_EMAILJS_SERVICE_ID,
-  TEMPLATE_ID: import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-  PUBLIC_KEY: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
-};
-
 const ContactPage = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -22,12 +15,25 @@ const ContactPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Scroll vers le haut au chargement de la page
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    // Initialiser EmailJS (optionnel mais recommandé)
-    emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+    // Debug : vérifier si les variables d'environnement sont chargées
+    console.log("EmailJS Config:", {
+      SERVICE_ID: import.meta.env.VITE_EMAILJS_SERVICE_ID,
+      TEMPLATE_ID: import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+      PUBLIC_KEY: import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+        ? "✓ Définie"
+        : "✗ Manquante",
+    });
+
+    // Initialiser EmailJS avec la clé publique
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+    if (publicKey) {
+      emailjs.init(publicKey);
+    } else {
+      console.error("PUBLIC_KEY manquante dans les variables d'environnement");
+    }
   }, []);
 
   const handleChange = (e) => {
@@ -35,7 +41,6 @@ const ContactPage = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
-    // Effacer les erreurs quand l'utilisateur modifie le formulaire
     if (error) setError("");
   };
 
@@ -44,26 +49,40 @@ const ContactPage = () => {
     setLoading(true);
     setError("");
 
+    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+    // Vérification avant envoi
+    if (!serviceId || !templateId || !publicKey) {
+      setError(
+        "Configuration EmailJS incomplète. Veuillez vérifier vos variables d'environnement."
+      );
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Envoyer l'email via EmailJS
+      const templateParams = {
+        from_name: formData.name,
+        from_email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        to_email: "fruitura@outlook.com",
+        reply_to: formData.email,
+      };
+
+      console.log("Envoi avec params:", templateParams);
+
       const result = await emailjs.send(
-        EMAILJS_CONFIG.SERVICE_ID,
-        EMAILJS_CONFIG.TEMPLATE_ID,
-        {
-          name: formData.name,
-          email: formData.email,
-          subject: formData.subject,
-          message: formData.message,
-          to_email: "fruitura@outlook.com",
-          from_name: formData.name,
-          reply_to: formData.email,
-        },
-        EMAILJS_CONFIG.PUBLIC_KEY
+        serviceId,
+        templateId,
+        templateParams,
+        publicKey
       );
 
-      console.log("Email envoyé avec succès:", result);
+      console.log("✓ Email envoyé avec succès:", result);
 
-      // Réinitialiser le formulaire
       setFormData({
         name: "",
         email: "",
@@ -72,9 +91,13 @@ const ContactPage = () => {
       });
       setSubmitted(true);
     } catch (error) {
-      console.error("Erreur lors de l'envoi de l'email:", error);
+      console.error("✗ Erreur lors de l'envoi:", error);
       setError(
-        "Une erreur s'est produite lors de l'envoi du message. Veuillez réessayer."
+        `Erreur: ${
+          error.text ||
+          error.message ||
+          "Impossible d'envoyer le message. Veuillez réessayer."
+        }`
       );
     } finally {
       setLoading(false);
