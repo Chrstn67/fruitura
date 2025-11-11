@@ -1,33 +1,21 @@
-// Configuration EmailJS
+// Configuration EmailJS - CORRIGÉ
 export const EMAILJS_CONFIG = {
   SERVICE_ID: "service_otz2rwn",
   TEMPLATE_ID: "template_5x89iva",
-  PUBLIC_KEY: "q8z75IXJXmV5DyNNG",
+  PUBLIC_KEY: "q8z75IXJXmV5DyNNG", // Assurez-vous que cette clé est exacte
 };
 
-// Fonction de vérification améliorée
+// Vérification de la configuration
 export const isEmailJSConfigured = () => {
-  const { SERVICE_ID, TEMPLATE_ID, PUBLIC_KEY } = EMAILJS_CONFIG;
-
-  return (
-    SERVICE_ID &&
-    SERVICE_ID !== "" &&
-    TEMPLATE_ID &&
-    TEMPLATE_ID !== "" &&
-    PUBLIC_KEY &&
-    PUBLIC_KEY !== ""
-  );
+  return EMAILJS_CONFIG.PUBLIC_KEY && EMAILJS_CONFIG.PUBLIC_KEY !== "";
 };
 
-// Test de connexion EmailJS
-export const testEmailJSConnection = async () => {
-  try {
-    const { emailjs } = await import("@emailjs/browser");
-    await emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
-    console.log("EmailJS initialisé avec succès");
+// Initialisation EmailJS
+export const initEmailJS = async () => {
+  const { default: emailjs } = await import("@emailjs/browser");
+  if (EMAILJS_CONFIG.PUBLIC_KEY) {
+    emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
     return true;
-  } catch (error) {
-    console.error("Erreur d'initialisation EmailJS:", error);
-    return false;
   }
+  return false;
 };
