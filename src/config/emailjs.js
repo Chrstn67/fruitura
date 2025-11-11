@@ -8,12 +8,26 @@ export const EMAILJS_CONFIG = {
 // Fonction de vérification améliorée
 export const isEmailJSConfigured = () => {
   const { SERVICE_ID, TEMPLATE_ID, PUBLIC_KEY } = EMAILJS_CONFIG;
-  return SERVICE_ID && TEMPLATE_ID && PUBLIC_KEY;
+
+  return (
+    SERVICE_ID &&
+    SERVICE_ID !== "" &&
+    TEMPLATE_ID &&
+    TEMPLATE_ID !== "" &&
+    PUBLIC_KEY &&
+    PUBLIC_KEY !== ""
+  );
 };
 
-// Initialisation EmailJS
-export const initEmailJS = () => {
-  if (typeof window !== "undefined" && window.emailjs) {
-    window.emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+// Test de connexion EmailJS
+export const testEmailJSConnection = async () => {
+  try {
+    const { emailjs } = await import("@emailjs/browser");
+    await emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+    console.log("EmailJS initialisé avec succès");
+    return true;
+  } catch (error) {
+    console.error("Erreur d'initialisation EmailJS:", error);
+    return false;
   }
 };

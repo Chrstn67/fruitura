@@ -4,8 +4,8 @@ import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
 import "../styles/ContactPage.css";
 
-// Import de la configuration
-import { EMAILJS_CONFIG, initEmailJS } from "../integrations/emailjs";
+// Importez la configuration depuis votre fichier emailjs.js
+import { EMAILJS_CONFIG } from "../integrations/emailjs.js";
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -18,14 +18,10 @@ const ContactPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Scroll vers le haut et initialisation EmailJS
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    // Initialiser EmailJS
-    initEmailJS();
-
-    // Alternative: initialisation directe
+    // Initialiser EmailJS avec la clé publique
     if (EMAILJS_CONFIG.PUBLIC_KEY) {
       emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
     }
@@ -57,9 +53,9 @@ const ContactPage = () => {
     }
 
     try {
-      console.log("Tentative d'envoi avec la configuration:", EMAILJS_CONFIG);
+      console.log("Tentative d'envoi avec EmailJS...");
+      console.log("Configuration:", EMAILJS_CONFIG);
 
-      // Méthode recommandée pour EmailJS v4
       const templateParams = {
         from_name: formData.name,
         from_email: formData.email,
@@ -68,6 +64,8 @@ const ContactPage = () => {
         to_email: "fruitura@outlook.com",
         reply_to: formData.email,
       };
+
+      console.log("Paramètres du template:", templateParams);
 
       const result = await emailjs.send(
         EMAILJS_CONFIG.SERVICE_ID,
@@ -79,7 +77,6 @@ const ContactPage = () => {
       console.log("Email envoyé avec succès:", result);
 
       if (result.status === 200) {
-        // Réinitialiser le formulaire
         setFormData({
           name: "",
           email: "",
@@ -88,21 +85,21 @@ const ContactPage = () => {
         });
         setSubmitted(true);
       } else {
-        throw new Error(`Erreur ${result.status}: ${result.text}`);
+        throw new Error(`Statut de réponse: ${result.status}`);
       }
     } catch (error) {
       console.error("Erreur détaillée EmailJS:", error);
 
-      // Messages d'erreur plus spécifiques
+      let errorMessage =
+        "Une erreur s'est produite lors de l'envoi du message. Veuillez réessayer.";
+
       if (error.text) {
-        setError(`Erreur EmailJS: ${error.text}`);
+        errorMessage += ` Détails: ${error.text}`;
       } else if (error.message) {
-        setError(`Erreur: ${error.message}`);
-      } else {
-        setError(
-          "Une erreur s'est produite lors de l'envoi du message. Veuillez réessayer."
-        );
+        errorMessage += ` Erreur: ${error.message}`;
       }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -113,35 +110,6 @@ const ContactPage = () => {
     setError("");
   };
 
-  // // Test de la configuration
-  // const testEmailJS = async () => {
-  //   try {
-  //     setLoading(true);
-  //     const testParams = {
-  //       from_name: "Test",
-  //       from_email: "test@example.com",
-  //       subject: "Test de configuration",
-  //       message: "Ceci est un test de configuration EmailJS",
-  //       to_email: "fruitura@outlook.com",
-  //     };
-
-  //     const result = await emailjs.send(
-  //       EMAILJS_CONFIG.SERVICE_ID,
-  //       EMAILJS_CONFIG.TEMPLATE_ID,
-  //       testParams,
-  //       EMAILJS_CONFIG.PUBLIC_KEY
-  //     );
-
-  //     console.log("Test réussi:", result);
-  //     alert("Test de configuration réussi !");
-  //   } catch (error) {
-  //     console.error("Test échoué:", error);
-  //     alert(`Test échoué: ${error.text || error.message}`);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   return (
     <div className="contact-page">
       <Header />
@@ -151,32 +119,16 @@ const ContactPage = () => {
           <div className="page-content">
             <h1>Nous contacter</h1>
 
-            {/* Bouton de test (à retirer en production)
-            {process.env.NODE_ENV === "development" && (
-              <button
-                onClick={testEmailJS}
-                className="btn btn-secondary"
-                disabled={loading}
-                style={{ marginBottom: "20px" }}
-              >
-                Tester la configuration EmailJS
-              </button>
-            )} */}
-
             <div className="contact-info">
               <p>
                 Vous avez une question, une suggestion ou besoin d'aide ?
                 N'hésitez pas à nous contacter, nous vous répondrons dans les
                 plus brefs délais.
               </p>
-              <p>
-                Veuillez être le plus précis possible pour que nous puissions
-                vous aider au mieux
-              </p>
             </div>
 
             {error && (
-              <div className="error-message">
+              <div className="alert alert-error">
                 <p>{error}</p>
                 <button onClick={resetForm} className="btn btn-secondary">
                   Réessayer
@@ -185,7 +137,7 @@ const ContactPage = () => {
             )}
 
             {submitted ? (
-              <div className="success-message">
+              <div className="alert alert-success">
                 <h2>Message envoyé !</h2>
                 <p>
                   Merci pour votre message. Nous vous répondrons rapidement.
@@ -262,15 +214,8 @@ const ContactPage = () => {
               <h2>Autres moyens de nous contacter</h2>
               <div className="contact-methods">
                 <div className="contact-method">
-                  <h3>Email</h3>
+                  <h3>Email direct</h3>
                   <p>fruitura@outlook.com</p>
-                </div>
-                <div className="contact-method">
-                  <h3>Réponse</h3>
-                  <p>
-                    Nous nous engageons à répondre à tous les messages dans un
-                    délai de 24 à 48 heures.
-                  </p>
                 </div>
               </div>
             </div>
