@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from "react";
+import emailjs from "@emailjs/browser";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
-import { sendContactEmail } from "../integrations/emailjs-service.js";
 import "../styles/ContactPage.css";
+
+// Remplacez ces valeurs par vos identifiants EmailJS
+const EMAILJS_CONFIG = {
+  SERVICE_ID: import.meta.env.VITE_EMAILJS_SERVICE_ID,
+  TEMPLATE_ID: import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+  PUBLIC_KEY: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
+};
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -15,8 +22,12 @@ const ContactPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Scroll vers le haut au chargement de la page
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    // Initialiser EmailJS (optionnel mais recommandé)
+    emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
   }, []);
 
   const handleChange = (e) => {
@@ -24,6 +35,7 @@ const ContactPage = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
+    // Effacer les erreurs quand l'utilisateur modifie le formulaire
     if (error) setError("");
   };
 
@@ -32,72 +44,38 @@ const ContactPage = () => {
     setLoading(true);
     setError("");
 
-    // Validation
-    if (
-      !formData.name ||
-      !formData.email ||
-      !formData.subject ||
-      !formData.message
-    ) {
-      setError("Veuillez remplir tous les champs obligatoires.");
-      setLoading(false);
-      return;
-    }
-
-    // Validation email basique
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      setError("Veuillez entrer une adresse email valide.");
-      setLoading(false);
-      return;
-    }
-
     try {
-      console.log("🚀 Début de l'envoi du formulaire...");
+      // Envoyer l'email via EmailJS
+      const result = await emailjs.send(
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID,
+        {
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+          to_email: "fruitura@outlook.com",
+          from_name: formData.name,
+          reply_to: formData.email,
+        },
+        EMAILJS_CONFIG.PUBLIC_KEY
+      );
 
-      const result = await sendContactEmail(formData);
+      console.log("Email envoyé avec succès:", result);
 
-      if (result.success) {
-        console.log("✅ Formulaire envoyé avec succès!");
-        setFormData({
-          name: "",
-          email: "",
-          subject: "",
-          message: "",
-        });
-        setSubmitted(true);
-      } else {
-        throw new Error(result.error);
-      }
+      // Réinitialiser le formulaire
+      setFormData({
+        name: "",
+        email: "",
+        subject: "",
+        message: "",
+      });
+      setSubmitted(true);
     } catch (error) {
-      console.error("❌ Erreur finale:", error);
-
-      let errorMessage =
-        "Une erreur s'est produite lors de l'envoi du message. ";
-
-      if (
-        error.message.includes("public key") ||
-        error.message.includes("The public key is required")
-      ) {
-        errorMessage =
-          "Erreur de configuration EmailJS. La clé publique est manquante ou invalide.";
-      } else if (
-        error.message.includes("template") ||
-        error.message.includes("Template not found")
-      ) {
-        errorMessage =
-          "Erreur de template EmailJS. Le modèle d'email est introuvable.";
-      } else if (
-        error.message.includes("service") ||
-        error.message.includes("Service not found")
-      ) {
-        errorMessage =
-          "Erreur de service EmailJS. Le service email est introuvable.";
-      } else {
-        errorMessage += `Détails: ${error.message}`;
-      }
-
-      setError(errorMessage);
+      console.error("Erreur lors de l'envoi de l'email:", error);
+      setError(
+        "Une erreur s'est produite lors de l'envoi du message. Veuillez réessayer."
+      );
     } finally {
       setLoading(false);
     }
@@ -120,13 +98,17 @@ const ContactPage = () => {
             <div className="contact-info">
               <p>
                 Vous avez une question, une suggestion ou besoin d'aide ?
-                N'hésitez pas à nous contacter.
+                N'hésitez pas à nous contacter, nous vous répondrons dans les
+                plus brefs délais.
+              </p>
+              <p>
+                Veuillez être le plus précis possible pour que nous puissions
+                vous aider au mieux
               </p>
             </div>
 
             {error && (
-              <div className="alert alert-error">
-                <h3>Erreur</h3>
+              <div className="error-message">
                 <p>{error}</p>
                 <button onClick={resetForm} className="btn btn-secondary">
                   Réessayer
@@ -135,8 +117,8 @@ const ContactPage = () => {
             )}
 
             {submitted ? (
-              <div className="alert alert-success">
-                <h2>✅ Message envoyé !</h2>
+              <div className="success-message">
+                <h2>Message envoyé !</h2>
                 <p>
                   Merci pour votre message. Nous vous répondrons rapidement.
                 </p>
@@ -156,12 +138,11 @@ const ContactPage = () => {
                     onChange={handleChange}
                     required
                     disabled={loading}
-                    placeholder="Votre nom complet"
                   />
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="email">Email *</label>
+                  <label htmlFor="email">Mon email *</label>
                   <input
                     type="email"
                     id="email"
@@ -170,7 +151,6 @@ const ContactPage = () => {
                     onChange={handleChange}
                     required
                     disabled={loading}
-                    placeholder="votre@email.com"
                   />
                 </div>
 
@@ -184,7 +164,6 @@ const ContactPage = () => {
                     onChange={handleChange}
                     required
                     disabled={loading}
-                    placeholder="Sujet de votre message"
                   />
                 </div>
 
@@ -198,7 +177,6 @@ const ContactPage = () => {
                     rows="6"
                     required
                     disabled={loading}
-                    placeholder="Votre message..."
                   />
                 </div>
 
@@ -207,21 +185,24 @@ const ContactPage = () => {
                   className="btn btn-primary"
                   disabled={loading}
                 >
-                  {loading ? "⏳ Envoi en cours..." : "📤 Envoyer le message"}
+                  {loading ? "Envoi en cours..." : "Envoyer le message"}
                 </button>
               </form>
             )}
 
             <div className="contact-details">
-              <h2>Autres moyens de contact</h2>
+              <h2>Autres moyens de nous contacter</h2>
               <div className="contact-methods">
                 <div className="contact-method">
-                  <h3>Email direct</h3>
+                  <h3>Email</h3>
                   <p>fruitura@outlook.com</p>
                 </div>
                 <div className="contact-method">
-                  <h3>Support</h3>
-                  <p>Nous répondons sous 24-48 heures</p>
+                  <h3>Réponse</h3>
+                  <p>
+                    Nous nous engageons à répondre à tous les messages dans un
+                    délai de 24 à 48 heures.
+                  </p>
                 </div>
               </div>
             </div>
