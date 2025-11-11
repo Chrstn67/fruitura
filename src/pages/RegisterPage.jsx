@@ -33,8 +33,8 @@ const RegisterPage = () => {
       return false;
     }
 
-    if (formData.password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères");
+    if (formData.password.length < 16) {
+      setError("Le mot de passe doit contenir au moins 16 caractères");
       return false;
     }
 
@@ -72,7 +72,7 @@ const RegisterPage = () => {
         }
       } else {
         setMessage(
-          "Inscription réussie ! Vérifiez votre email pour confirmer votre compte."
+          "Inscription réussie ! Vérifiez votre email pour confirmer votre compte. Attendez 5 minutes et vérifiez vos spams."
         );
         // Optionnel : rediriger après quelques secondes
         setTimeout(() => {

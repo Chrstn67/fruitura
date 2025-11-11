@@ -4,12 +4,8 @@ import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
 import "../styles/ContactPage.css";
 
-// Remplacez ces valeurs par vos identifiants EmailJS
-const EMAILJS_CONFIG = {
-  SERVICE_ID: import.meta.env.VITE_EMAILJS_SERVICE_ID,
-  TEMPLATE_ID: import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
-  PUBLIC_KEY: import.meta.env.VITE_EMAILJS_PUBLIC_KEY,
-};
+// Import de la configuration
+import { EMAILJS_CONFIG, initEmailJS } from "../integrations/emailjs";
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -22,12 +18,17 @@ const ContactPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // Scroll vers le haut au chargement de la page
+  // Scroll vers le haut et initialisation EmailJS
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    // Initialiser EmailJS (optionnel mais recommandé)
-    emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+    // Initialiser EmailJS
+    initEmailJS();
+
+    // Alternative: initialisation directe
+    if (EMAILJS_CONFIG.PUBLIC_KEY) {
+      emailjs.init(EMAILJS_CONFIG.PUBLIC_KEY);
+    }
   }, []);
 
   const handleChange = (e) => {
@@ -35,7 +36,6 @@ const ContactPage = () => {
       ...formData,
       [e.target.name]: e.target.value,
     });
-    // Effacer les erreurs quand l'utilisateur modifie le formulaire
     if (error) setError("");
   };
 
@@ -44,38 +44,65 @@ const ContactPage = () => {
     setLoading(true);
     setError("");
 
+    // Validation basique
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.subject ||
+      !formData.message
+    ) {
+      setError("Veuillez remplir tous les champs obligatoires.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      // Envoyer l'email via EmailJS
+      console.log("Tentative d'envoi avec la configuration:", EMAILJS_CONFIG);
+
+      // Méthode recommandée pour EmailJS v4
+      const templateParams = {
+        from_name: formData.name,
+        from_email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        to_email: "fruitura@outlook.com",
+        reply_to: formData.email,
+      };
+
       const result = await emailjs.send(
         EMAILJS_CONFIG.SERVICE_ID,
         EMAILJS_CONFIG.TEMPLATE_ID,
-        {
-          name: formData.name,
-          email: formData.email,
-          subject: formData.subject,
-          message: formData.message,
-          to_email: "fruitura@outlook.com",
-          from_name: formData.name,
-          reply_to: formData.email,
-        },
+        templateParams,
         EMAILJS_CONFIG.PUBLIC_KEY
       );
 
       console.log("Email envoyé avec succès:", result);
 
-      // Réinitialiser le formulaire
-      setFormData({
-        name: "",
-        email: "",
-        subject: "",
-        message: "",
-      });
-      setSubmitted(true);
+      if (result.status === 200) {
+        // Réinitialiser le formulaire
+        setFormData({
+          name: "",
+          email: "",
+          subject: "",
+          message: "",
+        });
+        setSubmitted(true);
+      } else {
+        throw new Error(`Erreur ${result.status}: ${result.text}`);
+      }
     } catch (error) {
-      console.error("Erreur lors de l'envoi de l'email:", error);
-      setError(
-        "Une erreur s'est produite lors de l'envoi du message. Veuillez réessayer."
-      );
+      console.error("Erreur détaillée EmailJS:", error);
+
+      // Messages d'erreur plus spécifiques
+      if (error.text) {
+        setError(`Erreur EmailJS: ${error.text}`);
+      } else if (error.message) {
+        setError(`Erreur: ${error.message}`);
+      } else {
+        setError(
+          "Une erreur s'est produite lors de l'envoi du message. Veuillez réessayer."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -86,6 +113,35 @@ const ContactPage = () => {
     setError("");
   };
 
+  // // Test de la configuration
+  // const testEmailJS = async () => {
+  //   try {
+  //     setLoading(true);
+  //     const testParams = {
+  //       from_name: "Test",
+  //       from_email: "test@example.com",
+  //       subject: "Test de configuration",
+  //       message: "Ceci est un test de configuration EmailJS",
+  //       to_email: "fruitura@outlook.com",
+  //     };
+
+  //     const result = await emailjs.send(
+  //       EMAILJS_CONFIG.SERVICE_ID,
+  //       EMAILJS_CONFIG.TEMPLATE_ID,
+  //       testParams,
+  //       EMAILJS_CONFIG.PUBLIC_KEY
+  //     );
+
+  //     console.log("Test réussi:", result);
+  //     alert("Test de configuration réussi !");
+  //   } catch (error) {
+  //     console.error("Test échoué:", error);
+  //     alert(`Test échoué: ${error.text || error.message}`);
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
   return (
     <div className="contact-page">
       <Header />
@@ -94,6 +150,18 @@ const ContactPage = () => {
         <div className="container container-sm">
           <div className="page-content">
             <h1>Nous contacter</h1>
+
+            {/* Bouton de test (à retirer en production)
+            {process.env.NODE_ENV === "development" && (
+              <button
+                onClick={testEmailJS}
+                className="btn btn-secondary"
+                disabled={loading}
+                style={{ marginBottom: "20px" }}
+              >
+                Tester la configuration EmailJS
+              </button>
+            )} */}
 
             <div className="contact-info">
               <p>
@@ -142,7 +210,7 @@ const ContactPage = () => {
                 </div>
 
                 <div className="form-group">
-                  <label htmlFor="email">Mon email *</label>
+                  <label htmlFor="email">Email *</label>
                   <input
                     type="email"
                     id="email"
