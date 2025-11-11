@@ -76,7 +76,7 @@ const RegisterPage = () => {
         );
         // Optionnel : rediriger après quelques secondes
         setTimeout(() => {
-          navigate("/login");
+          window.location.href = "https://fruitura.vercel.app/#/login";
         }, 3000);
       }
     } catch (err) {

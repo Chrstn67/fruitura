@@ -73,12 +73,19 @@ function App() {
 
   const signUp = async (email, password, userData = {}) => {
     try {
+      // URL de redirection après confirmation email
+      const redirectUrl = "https://fruitura.vercel.app/#/login";
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: userData,
+          emailRedirectTo: redirectUrl,
+          data: {
+            ...userData,
+            // Ajoutez des métadonnées supplémentaires si nécessaire
+            website_url: "https://fruitura.vercel.app",
+          },
         },
       });
 
