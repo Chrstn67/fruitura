@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from "react";
-import emailjs from "@emailjs/browser";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
+import { sendContactEmail } from "../integrations/emailjs-service.js";
 import "../styles/ContactPage.css";
-
-// Importez la configuration
-import { EMAILJS_CONFIG, initEmailJS } from "../integrations/emailjs.js";
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -17,24 +14,9 @@ const ContactPage = () => {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [emailjsReady, setEmailjsReady] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-
-    // Initialiser EmailJS au chargement du composant
-    const initialize = async () => {
-      try {
-        await initEmailJS();
-        setEmailjsReady(true);
-        console.log("EmailJS initialisé avec succès");
-      } catch (error) {
-        console.error("Erreur d'initialisation EmailJS:", error);
-        setError("Erreur de configuration EmailJS");
-      }
-    };
-
-    initialize();
   }, []);
 
   const handleChange = (e) => {
@@ -47,12 +29,6 @@ const ContactPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!emailjsReady) {
-      setError("EmailJS n'est pas encore initialisé. Veuillez patienter.");
-      return;
-    }
-
     setLoading(true);
     setError("");
 
@@ -68,45 +44,57 @@ const ContactPage = () => {
       return;
     }
 
+    // Validation email basique
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError("Veuillez entrer une adresse email valide.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      console.log("Envoi avec EmailJS...", EMAILJS_CONFIG);
+      console.log("🚀 Début de l'envoi du formulaire...");
 
-      // Méthode 1 : Utilisation directe avec la clé publique en paramètre
-      const result = await emailjs.send(
-        EMAILJS_CONFIG.SERVICE_ID,
-        EMAILJS_CONFIG.TEMPLATE_ID,
-        {
-          from_name: formData.name,
-          from_email: formData.email,
-          subject: formData.subject,
-          message: formData.message,
-          to_email: "fruitura@outlook.com",
-          reply_to: formData.email,
-        },
-        EMAILJS_CONFIG.PUBLIC_KEY // Fournir explicitement la clé publique
-      );
+      const result = await sendContactEmail(formData);
 
-      console.log("✅ Email envoyé avec succès:", result);
-
-      // Réinitialiser le formulaire
-      setFormData({
-        name: "",
-        email: "",
-        subject: "",
-        message: "",
-      });
-      setSubmitted(true);
+      if (result.success) {
+        console.log("✅ Formulaire envoyé avec succès!");
+        setFormData({
+          name: "",
+          email: "",
+          subject: "",
+          message: "",
+        });
+        setSubmitted(true);
+      } else {
+        throw new Error(result.error);
+      }
     } catch (error) {
-      console.error("❌ Erreur EmailJS détaillée:", error);
+      console.error("❌ Erreur finale:", error);
 
-      let errorMessage = "Erreur lors de l'envoi du message. ";
+      let errorMessage =
+        "Une erreur s'est produite lors de l'envoi du message. ";
 
-      if (error.text) {
-        errorMessage += `Détails: ${error.text}`;
-      } else if (error.message) {
-        errorMessage += `Message: ${error.message}`;
-      } else if (error.status) {
-        errorMessage += `Statut: ${error.status}`;
+      if (
+        error.message.includes("public key") ||
+        error.message.includes("The public key is required")
+      ) {
+        errorMessage =
+          "Erreur de configuration EmailJS. La clé publique est manquante ou invalide.";
+      } else if (
+        error.message.includes("template") ||
+        error.message.includes("Template not found")
+      ) {
+        errorMessage =
+          "Erreur de template EmailJS. Le modèle d'email est introuvable.";
+      } else if (
+        error.message.includes("service") ||
+        error.message.includes("Service not found")
+      ) {
+        errorMessage =
+          "Erreur de service EmailJS. Le service email est introuvable.";
+      } else {
+        errorMessage += `Détails: ${error.message}`;
       }
 
       setError(errorMessage);
@@ -138,6 +126,7 @@ const ContactPage = () => {
 
             {error && (
               <div className="alert alert-error">
+                <h3>Erreur</h3>
                 <p>{error}</p>
                 <button onClick={resetForm} className="btn btn-secondary">
                   Réessayer
@@ -147,7 +136,7 @@ const ContactPage = () => {
 
             {submitted ? (
               <div className="alert alert-success">
-                <h2>Message envoyé !</h2>
+                <h2>✅ Message envoyé !</h2>
                 <p>
                   Merci pour votre message. Nous vous répondrons rapidement.
                 </p>
@@ -167,6 +156,7 @@ const ContactPage = () => {
                     onChange={handleChange}
                     required
                     disabled={loading}
+                    placeholder="Votre nom complet"
                   />
                 </div>
 
@@ -180,6 +170,7 @@ const ContactPage = () => {
                     onChange={handleChange}
                     required
                     disabled={loading}
+                    placeholder="votre@email.com"
                   />
                 </div>
 
@@ -193,6 +184,7 @@ const ContactPage = () => {
                     onChange={handleChange}
                     required
                     disabled={loading}
+                    placeholder="Sujet de votre message"
                   />
                 </div>
 
@@ -206,20 +198,17 @@ const ContactPage = () => {
                     rows="6"
                     required
                     disabled={loading}
+                    placeholder="Votre message..."
                   />
                 </div>
 
                 <button
                   type="submit"
                   className="btn btn-primary"
-                  disabled={loading || !emailjsReady}
+                  disabled={loading}
                 >
-                  {loading ? "Envoi en cours..." : "Envoyer le message"}
+                  {loading ? "⏳ Envoi en cours..." : "📤 Envoyer le message"}
                 </button>
-
-                {!emailjsReady && (
-                  <p className="text-warning">Initialisation en cours...</p>
-                )}
               </form>
             )}
 
@@ -229,6 +218,10 @@ const ContactPage = () => {
                 <div className="contact-method">
                   <h3>Email direct</h3>
                   <p>fruitura@outlook.com</p>
+                </div>
+                <div className="contact-method">
+                  <h3>Support</h3>
+                  <p>Nous répondons sous 24-48 heures</p>
                 </div>
               </div>
             </div>
