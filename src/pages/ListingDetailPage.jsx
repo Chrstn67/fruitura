@@ -113,6 +113,7 @@ const ListingDetailPage = () => {
   };
 
   const handleRatingSubmitted = () => {
+    // Recharger les données après modification/suppression d'avis
     fetchRatings();
     fetchOwnerAverageRating();
   };
@@ -218,6 +219,11 @@ const ListingDetailPage = () => {
       </div>
     );
   }
+
+  // Filtrer les avis pour ne pas afficher celui de l'utilisateur courant dans la liste publique
+  const publicRatings = ratings.filter(
+    (rating) => rating.receiver_id !== user?.id
+  );
 
   return (
     <div className="listing-detail-page">
@@ -403,7 +409,7 @@ const ListingDetailPage = () => {
               </div>
 
               {/* Système d'évaluation */}
-              {user && user.id !== listing.user_id && (
+              {/* {user && user.id !== listing.user_id && (
                 <div className="rating-section">
                   <RatingSystem
                     listingId={listing.id}
@@ -411,7 +417,7 @@ const ListingDetailPage = () => {
                     onRatingSubmitted={handleRatingSubmitted}
                   />
                 </div>
-              )}
+              )} */}
 
               {user && user.id !== listing.user_id && (
                 <div className="action-buttons">
@@ -426,13 +432,14 @@ const ListingDetailPage = () => {
             </div>
           </div>
 
-          {ratings.length > 0 && (
+          {/* Section des avis - Filtrer pour ne pas afficher l'avis de l'utilisateur courant */}
+          {publicRatings.length > 0 && (
             <div className="ratings-section">
               <div className="ratings-header">
-                <h2>Avis des utilisateurs ({ratings.length})</h2>
+                <h2>Avis des utilisateurs ({publicRatings.length})</h2>
               </div>
               <div className="ratings-list">
-                {ratings.map((rating) => (
+                {publicRatings.map((rating) => (
                   <div key={rating.id} className="rating-item">
                     <div className="rating-header">
                       <div className="rating-user">
