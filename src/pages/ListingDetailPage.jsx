@@ -4,7 +4,6 @@ import { supabase } from "../integrations/supabase/client.js";
 import { useAuth } from "../components/App.jsx";
 import Header from "../components/Header.jsx";
 import Footer from "../components/Footer.jsx";
-import RatingSystem from "../components/RatingSystem.jsx";
 import "../styles/ListingDetailPage.css";
 
 const ListingDetailPage = () => {
@@ -15,23 +14,13 @@ const ListingDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showContactForm, setShowContactForm] = useState(false);
-  const [ratings, setRatings] = useState([]);
   const [contactMessage, setContactMessage] = useState("");
   const [reservationDate, setReservationDate] = useState("");
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const [ownerAverageRating, setOwnerAverageRating] = useState(0);
-  const [ownerTotalRatings, setOwnerTotalRatings] = useState(0);
 
   useEffect(() => {
     fetchListing();
   }, [id]);
-
-  useEffect(() => {
-    if (listing) {
-      fetchRatings();
-      fetchOwnerAverageRating();
-    }
-  }, [listing]);
 
   const fetchListing = async () => {
     try {
@@ -62,60 +51,10 @@ const ListingDetailPage = () => {
     }
   };
 
-  const fetchRatings = async () => {
-    if (!listing) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("ratings_2025_10_29_18_05")
-        .select(
-          `
-          *,
-          profiles_2025_10_29_18_05!receiver_id (
-            full_name,
-            avatar_url
-          )
-        `
-        )
-        .eq("giver_id", listing.user_id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      setRatings(data || []);
-    } catch (error) {
-      console.error("Error fetching ratings:", error);
-    }
-  };
-
-  const fetchOwnerAverageRating = async () => {
-    if (!listing) return;
-
-    try {
-      const { data, error } = await supabase
-        .from("ratings_2025_10_29_18_05")
-        .select("rating")
-        .eq("giver_id", listing.user_id);
-
-      if (error) throw error;
-
-      if (data && data.length > 0) {
-        const total = data.reduce((sum, item) => sum + item.rating, 0);
-        const average = total / data.length;
-        setOwnerAverageRating(average);
-        setOwnerTotalRatings(data.length);
-      } else {
-        setOwnerAverageRating(0);
-        setOwnerTotalRatings(0);
-      }
-    } catch (error) {
-      console.error("Error fetching owner average rating:", error);
-    }
-  };
-
   const handleRatingSubmitted = () => {
-    // Recharger les données après modification/suppression d'avis
-    fetchRatings();
-    fetchOwnerAverageRating();
+    // Le RatingSystem gère maintenant ses propres données
+    // Pas besoin de recharger quoi que ce soit ici
+    console.log("Rating submitted, RatingSystem will handle the refresh");
   };
 
   const handleContactSubmit = async (e) => {
@@ -172,27 +111,6 @@ const ListingDetailPage = () => {
     return `${price}€`;
   };
 
-  const renderStars = (rating, showValue = false, size = "medium") => {
-    if (!rating || rating === 0) return null;
-
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 >= 0.5;
-    const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-
-    return (
-      <div className="stars-display">
-        <div className={`stars ${size}`}>
-          {"★".repeat(fullStars)}
-          {hasHalfStar && "⭐"}
-          {"☆".repeat(emptyStars)}
-        </div>
-        {showValue && (
-          <span className="rating-value">({rating.toFixed(1)})</span>
-        )}
-      </div>
-    );
-  };
-
   if (loading) {
     return (
       <div className="loading-container">
@@ -219,11 +137,6 @@ const ListingDetailPage = () => {
       </div>
     );
   }
-
-  // Filtrer les avis pour ne pas afficher celui de l'utilisateur courant dans la liste publique
-  const publicRatings = ratings.filter(
-    (rating) => rating.receiver_id !== user?.id
-  );
 
   return (
     <div className="listing-detail-page">
@@ -390,34 +303,9 @@ const ListingDetailPage = () => {
                       {listing.profiles_2025_10_29_18_05?.full_name ||
                         "Utilisateur"}
                     </h4>
-                    {ownerTotalRatings > 0 && (
-                      <div className="owner-rating">
-                        {renderStars(ownerAverageRating, true, "small")}
-                        <span className="rating-count">
-                          {ownerTotalRatings}{" "}
-                          {ownerTotalRatings > 1 ? "avis" : "avis"}
-                        </span>
-                      </div>
-                    )}
-                    {ownerTotalRatings === 0 && (
-                      <div className="no-ratings">
-                        <span>Aucun avis pour le moment</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>
-
-              {/* Système d'évaluation */}
-              {/* {user && user.id !== listing.user_id && (
-                <div className="rating-section">
-                  <RatingSystem
-                    listingId={listing.id}
-                    giverId={listing.user_id}
-                    onRatingSubmitted={handleRatingSubmitted}
-                  />
-                </div>
-              )} */}
 
               {user && user.id !== listing.user_id && (
                 <div className="action-buttons">
@@ -431,53 +319,6 @@ const ListingDetailPage = () => {
               )}
             </div>
           </div>
-
-          {/* Section des avis - Filtrer pour ne pas afficher l'avis de l'utilisateur courant */}
-          {publicRatings.length > 0 && (
-            <div className="ratings-section">
-              <div className="ratings-header">
-                <h2>Avis des utilisateurs ({publicRatings.length})</h2>
-              </div>
-              <div className="ratings-list">
-                {publicRatings.map((rating) => (
-                  <div key={rating.id} className="rating-item">
-                    <div className="rating-header">
-                      <div className="rating-user">
-                        <div className="user-avatar">
-                          {rating.profiles_2025_10_29_18_05?.avatar_url ? (
-                            <img
-                              src={rating.profiles_2025_10_29_18_05.avatar_url}
-                              alt="Avatar"
-                            />
-                          ) : (
-                            <span>👤</span>
-                          )}
-                        </div>
-                        <div className="user-info">
-                          <h4>
-                            {rating.profiles_2025_10_29_18_05?.full_name ||
-                              "Utilisateur"}
-                          </h4>
-                          <div className="rating-stars">
-                            {renderStars(rating.rating, false, "small")}
-                            <span className="individual-rating">
-                              ({rating.rating}/5)
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="rating-date">
-                        {formatDate(rating.created_at)}
-                      </div>
-                    </div>
-                    {rating.comment && (
-                      <p className="rating-comment">"{rating.comment}"</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Modal de contact */}
