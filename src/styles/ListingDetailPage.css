@@ -121,7 +121,7 @@
       align-items: flex-start;
       margin-bottom: 1rem;
 
-      h1 {
+      h2 {
         color: var(--text-color);
         font-size: 2rem;
         font-weight: 700;
@@ -257,8 +257,8 @@
         }
 
         &.allowed {
-          background: rgba(42, 157, 143, 0.1);
-          color: var(--success-color);
+          background: #2a9d8f1a;
+          color: #000;
         }
 
         &.not-allowed {
@@ -267,13 +267,13 @@
         }
 
         &.required {
-          background: rgba(244, 162, 97, 0.1);
+          background: #f4a2611a;
           color: var(--warning-color);
         }
 
         &.not-required {
-          background: rgba(42, 157, 143, 0.1);
-          color: var(--success-color);
+          background: #2a9d8f1a;
+          color: #000;
         }
       }
     }

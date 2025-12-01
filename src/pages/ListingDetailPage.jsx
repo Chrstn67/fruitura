@@ -54,7 +54,7 @@ const ListingDetailPage = () => {
   const handleRatingSubmitted = () => {
     // Le RatingSystem gère maintenant ses propres données
     // Pas besoin de recharger quoi que ce soit ici
-    console.log("Rating submitted, RatingSystem will handle the refresh");
+    // console.log("Rating submitted, RatingSystem will handle the refresh");
   };
 
   const handleContactSubmit = async (e) => {
@@ -208,7 +208,7 @@ const ListingDetailPage = () => {
 
             <div className="listing-info">
               <div className="listing-header">
-                <h1>{listing.title}</h1>
+                <h2>{listing.title}</h2>
                 <div className="price-tag">
                   {formatPrice(listing.price, listing.is_free)}
                 </div>

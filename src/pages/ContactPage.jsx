@@ -70,7 +70,7 @@ const ContactPage = () => {
         reply_to: formData.email,
       };
 
-      console.log("Envoi en cours...", templateParams);
+      // console.log("Envoi en cours...", templateParams);
 
       const result = await emailjs.send(
         import.meta.env.VITE_EMAILJS_SERVICE_ID,
@@ -79,7 +79,7 @@ const ContactPage = () => {
         import.meta.env.VITE_EMAILJS_PUBLIC_KEY
       );
 
-      console.log("✓ Email envoyé avec succès:", result.status, result.text);
+      // console.log("✓ Email envoyé avec succès:", result.status, result.text);
 
       setFormData({
         name: "",

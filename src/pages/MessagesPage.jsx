@@ -150,7 +150,7 @@ const MessagesPage = () => {
         throw error;
       }
 
-      console.log("Fetched messages:", data);
+      // console.log("Fetched messages:", data);
       setMessages(data || []);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -203,7 +203,7 @@ const MessagesPage = () => {
         is_read: false,
       };
 
-      console.log("Sending message with data:", messageData);
+      // console.log("Sending message with data:", messageData);
 
       const { data, error } = await supabase
         .from("messages_2025_10_29_18_05")

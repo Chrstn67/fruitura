@@ -149,6 +149,7 @@ setIsMenuOpen(false);
 };
 
 return (
+
 <header className="header">
 <div className="container">
 <div className="header-content">
@@ -1648,7 +1649,7 @@ setLoading(true);
 
 const fetchMessages = async (conversationId) => {
 try {
-console.log("Fetching messages for conversation:", conversationId);
+// console.log("Fetching messages for conversation:", conversationId);
 
       const parts = conversationId.split("-");
       // CORRECTION : Prendre les 3 premières parties seulement (userID-otherUserID-listingID)
@@ -1659,9 +1660,9 @@ console.log("Fetching messages for conversation:", conversationId);
       // CORRECTION : Identifier correctement l'autre utilisateur
       const otherUserId = userId1 === user.id ? userId2 : userId1;
 
-      console.log("User ID:", user.id);
-      console.log("Other User ID:", otherUserId);
-      console.log("Listing ID:", listingId);
+      // console.log("User ID:", user.id);
+      // console.log("Other User ID:", otherUserId);
+      // console.log("Listing ID:", listingId);
 
       let query = superbase
         .from("messages_2025_10_29_18_05")
@@ -1687,7 +1688,7 @@ console.log("Fetching messages for conversation:", conversationId);
         throw error;
       }
 
-      console.log("Fetched messages:", data);
+      // console.log("Fetched messages:", data);
       setMessages(data || []);
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -1750,7 +1751,7 @@ if (!newMessage.trim() || !selectedConversation) return;
         is_read: false,
       };
 
-      console.log("Sending message with data:", messageData);
+      // console.log("Sending message with data:", messageData);
 
       const { data, error } = await superbase
         .from("messages_2025_10_29_18_05")
@@ -1840,6 +1841,7 @@ setShowConversations(false);
 
 if (loading) {
 return (
+
 <div className="loading-container">
 <div className="loading-spinner"></div>
 <p>Chargement des messages...</p>
@@ -1848,6 +1850,7 @@ return (
 }
 
 return (
+
 <div className="messages-page">
 <Header />
 
@@ -2498,6 +2501,7 @@ listing.id === listingId
 
 if (loading) {
 return (
+
 <div className="loading-container">
 <div className="loading-spinner"></div>
 <p>Chargement des annonces...</p>
@@ -2506,6 +2510,7 @@ return (
 }
 
 return (
+
 <div className="home-page">
 <Header />
 
